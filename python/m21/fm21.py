@@ -11,7 +11,7 @@ import os
 # GENERAL MIDI HANDLING
 # =====================
 
-def load_midi_corpus(midi_corpus_location='/home/angel/Git/bassspaces/corpus'):
+def load_midi_corpus(midi_corpus_location='/home/angel/Git/bassspaces/corpora'):
     midi_corpus_list = os.listdir(midi_corpus_location)
     for anyfile in midi_corpus_list:
         if ".mid" not in anyfile:

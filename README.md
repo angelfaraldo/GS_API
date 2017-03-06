@@ -1,14 +1,14 @@
-GS_API
-===
+GsAPI
+=====
 [![Build Status](https://travis-ci.org/GiantSteps/GS_API.svg?branch=master)](https://travis-ci.org/GiantSteps/GS_API)
 [![codecov](https://codecov.io/gh/GiantSteps/GS_API/branch/master/graph/badge.svg)](https://codecov.io/gh/GiantSteps/GS_API)
 
-The GS_API is a Python/C++ library for manipulating musical symbolic data.
+The gsapi is a Python/C++ library for manipulating musical symbolic data.
 
 
 Overview
-------
-The GS_API provides Python/C++ classes and interface for dealing with musical data. The main features are:
+--------
+The gsapi provides Python/C++ classes and interface for dealing with musical data. The main features are:
 
 * flexible input/output from/to JSON/MIDI
 * Rhythm generation, both agnostic and based on styles.
@@ -16,9 +16,9 @@ The GS_API provides Python/C++ classes and interface for dealing with musical da
 * More to come.
 
 
-Installing the Library
------
-Installing last stable release can be done via pip
+Installing the library
+----------------------
+Installing last stable release can be done via pip:
 ```
 pip install gsapi
 ```
@@ -42,11 +42,11 @@ python setup.py install
 
 ```python
 from gsapi import *
-p = GSPattern()
-p.addEvent(GSPatternEvent(startTime=0,duration=1,pitch=64,velocity=127,tag="Kick")
-p.addEvent(GSPatternEvent(1,3,62,51,"Snare")
+p = Pattern()
+p.addEvent(GSPatternEvent(startTime=0, duration=1, pitch=64, velocity=127, tag="Kick")
+p.addEvent(GSPatternEvent(1, 3, 62, 51, "Snare")
 ```
-will fill *GSPattern* p with :
+will fill *Pattern* p with:
 * one event tagged Kick starting at 0 with a duration of 1 a Midi Note Number of 64 and a velocity of 127
 * one event tagged Snare starting at 1 with a duration of 3 a Midi Note Number of 62 and a velocity of 51
 
@@ -54,7 +54,7 @@ will fill *GSPattern* p with :
 * get All loops from a dataset
 ```python
 from gsapi import *
-dataset = GSDataSet(midiFolder="The/Midi/Folder/To/Crawl",midiGlob="*.mid", midiMap=GSIO.generalMidiMap)
+dataset = GSDataSet(midiFolder="The/Midi/Folder/To/Crawl", midiGlob="*.mid", midiMap=GSIO.generalMidiMap)
 allPatternsSliced = []
 for midiPattern in dataset.patterns:
 	for sliced in midiPattern.splitInEqualLengthPatterns(16): # split in 16 beat slices
@@ -64,7 +64,7 @@ print allPatternSliced
 
 * descriptors analysis example 
 ```python
-densityDescriptor = GSDescriptorDensity();
+densityDescriptor = Density()
 for pattern in dataset.patterns:
 	kickPattern = pattern.getPatternWithTags(tagToLookFor="kick")
 	densityOfKick = densityDescriptor.getDescriptorForPattern(kickPattern)
@@ -73,63 +73,61 @@ for pattern in dataset.patterns:
 * style analysis example
 ```python
 
-markovStyle = GSMarkovStyle(order=3,numSteps=32,loopDuration=16);
-markovStyle.generateStyle(allPatternsSliced)
-newPattern = markovStyle.generatePattern()
+MarkovStyle = MarkovStyle(order=3,numSteps=32,loopDuration=16)
+MarkovStyle.generateStyle(allPatternsSliced)
+newPattern = MarkovStyle.generatePattern()
 ```
 
-
-
 API Philosophies
-------
+----------------
 **JSON and MIDI**
 
-we encourage use of JSON to be able to work with consistent and reusable datasets, as midi files tends to have different MIDI mapping , structures, or even suspicious file format implementations.
+we encourage use of JSON to be able to work with consistent and reusable datasets, as midi files tend to have different MIDI mappings, structures, or even suspicious file format implementations.
 Thus we provide flexible MIDI input module *GSIO* for tagging events with respect to their pitch/channel/trackName
-Note to tag mapping is reppresented by a dictionnary where key represent a tag and value is a rule such tag has to validate
+Note to tag mapping is reppresented by a dictionary where key represent a tag and value is a rule such tag has to validate
 * rules are either list or single *condition* that are OR'ed
 * each condition is either a tuple with expected pitch value and channel value or an integer representing expected pitch value
 
 ```python
 from gsapi import *
 midiGlobPath = '/path/to/midi/*.mid'
-NoteToTagsMap = {"Kick":30,"Snare":(32,4),"ClosedHihat":[(33,'*'),45]}
-listOfGSPatterns = GSIO.fromMidiCollection(midiGlobPath,NoteToTagsMap)
+NoteToTagsMap = {"Kick":30, 
+                 "Snare":(32,4),
+                 "ClosedHihat":[(33,'*'),45]
+                 }
+listOfGSPatterns = GSIO.fromMidiCollection(midiGlobPath, NoteToTagsMap)
 ```
 
+will return a list of *Pattern* with event being tagged:
+* 'Kick' if MIDI pitch is 30 in any channel.
+* 'Snare' if MIDI pitch is 32 and channel is 4.
+* 'ClosedHihat' if MIDI pitch is 33 on whatever channel or MIDI pitch is 45 on any channel.
 
-will return a list of *GSPattern* with event being tagged :
-* 'Kick' if MIDI pitch is 30 and whatever channel
-* 'Snare' if MIDI pitch is 32 and channel is 4
-* 'ClosedHihat' if MIDI pitch is 33 on whatever channel or MIDI pitch is 45 on whatever channel
 
-
-# GS-API examples
-
+# gsapi examples
 
 All submodules within API provide help by typing help(Name of the module)
 
-
 ```python
-help(GSPattern)
-#help(GSBassmineAnalysis)
+help(Pattern)
+help(GSBassmineAnalysis)
 ```
 
 ## Drum and bass generative example
 
-### Drums example
 
+### Drums example
 
 ```python
 from gsapi import *
 
 #Select the folder where the MIDI files for analysis are located
 
-defaultMidiFolder = "../../corpus/midiTests"
+defaultMidiFolder = "../../corpora/drums"
 
-#Use 'GSDataset' to extract the MIDI file
+#Use 'Dataset' to extract the MIDI file
 
-dataset = GSDataset(midiFolder=defaultMidiFolder,midiGlob="motown.mid",midiMap=GSIO.generalMidiMap,checkForOverlapped = True)
+dataset = GSDataset(midiFolder=defaultMidiFolder, midiGlob="motown.mid", midiMap=GSIO.generalMidiMap, checkForOverlapped=True)
 
 #use the function'splitInEqualLengthPatterns' to split the 
 #contents of the dataset and to set the minimum "grain" or "timeframe" of the analysis
@@ -142,15 +140,15 @@ for midiPattern in dataset.patterns:
         allPatternsSliced+=[sliced]
 
 #set the parameters of the markov style: the order, the number of steps and the final duration of the output
-#and create an instance of GSMarkovStyle called "markovstyle"
+MarkovStyle
 
-markovStyle = GSMarkovStyle(order=1,numSteps=16,loopDuration=sizeOfSlice);
+MarkovStyle = MarkovStyle(order=1, numSteps=16, loopDuration=sizeOfSlice)
 
 #generate a style based on the sliced patterns in the list "allPatternsSliced"
-markovStyle.generateStyle(allPatternsSliced)
+MarkovStyle.generateStyle(allPatternsSliced)
 
-#Create a pattern simply using the function "generatePattern" of the markovStyle
-newPattern = markovStyle.generatePattern()
+MarkovStyle
+newPattern = MarkovStyle.generatePattern()
 
 # Export to MIDI
 GSIO.toMIDI(newPattern, name="drums", midiMap=GSPatternUtils.generalMidiMap)
@@ -166,17 +164,17 @@ print newPattern
 
 justkick=newPattern.getPatternWithTags('Acoustic Bass Drum', exactSearch=True, copy=True)
 
-kickAsList=[0]*sizeOfSlice
-for s,e in enumerate(justkick.events):
+kickAsList = [0] * sizeOfSlice
+for s, e in enumerate(justkick.events):
 
-    kickAsList[int(e.startTime)]=1
+    kickAsList[int(e.startTime)] = 1
 
 print kickAsList
 ```
 
 ### Bassmine example
 
-Following script commands present examples of Bassline rhythmic analysis for generative processes using GS-API.
+The following script commands present examples of Bassline rhythmic analysis for generative processes using the gsapi.
 
 
 ```python
@@ -217,7 +215,7 @@ Moreover, the initial probabilites of events are computed, used to trigger the g
 
 
 ```python
-# Analyse corpus and build Markov model
+corpora
 MM, kick_patterns = bassmine.corpus_analysis(bass_path, drum_path)
 # Normalize transition matrices
 MM.normalize_model()
@@ -227,7 +225,7 @@ Once models are computed we can export them.
 
 
 ```python
-# Output folder (to use with Max this folder should be Bassmine-master/models/)
+bassmine
 _path = 'output/'
 #  Uncomment to create models and export to pickle. REQUIRED to add new collections and use them in Max app.
 # Export to pickle files
@@ -265,11 +263,10 @@ NHMvariation = markov.variationMM(MM, target_bass, _path)
 
 
 ```python
-# Example od generation without constraints. It computes Homogeneous Markov Model (HM)
+# Example of generation without constraints. It computes Homogeneous Markov Model (HM)
 pattern = markov.generateBassRhythm(MM)
 pattern.toMIDI(name='regular')
 ```
-
 
 ```python
 # Example of generation using Interlocking constraint.
@@ -278,13 +275,9 @@ inter_pattern = markov.generateBassRhythm(MM, target=target_kick)
 inter_pattern.toMIDI(name='interlock')
 ```
 
-
 ```python
 # Example of variation generation
 var_mask = [1, 1, 1, -1, 1, 1, -1, 1]
-variation_pattern = markov.generateBassRhythmVariation(MM,inter_pattern,var_mask)
+variation_pattern = markov.generateBassRhythmVariation(MM, inter_pattern, var_mask)
 variation_pattern.toMIDI(name='variation')
 ```
-
-
-

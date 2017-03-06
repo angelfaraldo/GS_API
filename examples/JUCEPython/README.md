@@ -3,7 +3,7 @@ Example using JUCE library
 this VST Plugin is for testing purpose only .
 
 this VST loads a python file (python/VSTPlugin.py) and implement a basic API for :
-* display and play a GSPattern
+* display and play a Pattern
 * calling python functions from VST UI
 
 

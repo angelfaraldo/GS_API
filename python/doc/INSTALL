@@ -1,35 +1,33 @@
 setting up machine to generate the doc
-=============
+======================================
 
 Git
-========
+===
 cd python/doc
 mkdir gh-pages
-git clone -b gh-pages https://github.com/GiantSteps/GS_API.git gh-pages
-
+git clone -b gh-pages https://github.com/angelfaraldo/gsapi.git gh-pages
 
 
 python environment
-=========
+===================
 
 pip install -U sphinx
-
 pip install sphinxcontrib-napoleon
 pip install -U recommonmark
 pip install sphinx_rtd_theme
 (old one pip install sphinx_bootstrap_theme)
 
+
 on OSX
-==========
-be sure to have following lines in your ~/.bash_profile
+======
+Be sure to have following lines in your ~/.bash_profile
 export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
 
 
 updating doc
 ============
-be sure that gh-page folder is tracking gh-page branch and not master
-
+Be sure that gh-page folder is tracking gh-page branch and not master.
 
 cd python/doc
 make html && make install

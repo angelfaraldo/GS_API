@@ -44,8 +44,8 @@
         <FILE compile="0" file="../../src/Utils/GSPatternPlayer.h" id="lv3Qsx" name="GSPatternPlayer.h" resource="0" />
       </GROUP>
       <FILE compile="0" file="../../src/GS_API.h" id="ExHtrI" name="GS_API.h" resource="0" />
-      <FILE compile="1" file="../../src/GSPattern.cpp" id="nspHIL" name="GSPattern.cpp" resource="0" />
-      <FILE compile="0" file="../../src/GSPattern.h" id="WTmCa5" name="GSPattern.h" resource="0" />
+      <FILE compile="1" file="../../src/Pattern.cpp" id="nspHIL" name="Pattern.cpp" resource="0" />
+      <FILE compile="0" file="../../src/Pattern.h" id="WTmCa5" name="Pattern.h" resource="0" />
       <FILE compile="1" file="../../src/GSPatternEvent.cpp" id="XUJ1e1" name="GSPatternEvent.cpp" resource="0" />
       <FILE compile="0" file="../../src/GSPatternEvent.h" id="PUGQCN" name="GSPatternEvent.h" resource="0" />
       <FILE compile="1" file="../../src/GSStyle.cpp" id="ouLIJw" name="GSStyle.cpp" resource="0" />

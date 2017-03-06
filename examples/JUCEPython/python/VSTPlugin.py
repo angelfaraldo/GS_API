@@ -3,7 +3,7 @@ if __name__=='__main__':
 	import sys,os
 	pathToAdd = os.path.abspath(os.path.join(__file__,os.path.pardir,os.path.pardir,os.path.pardir,os.path.pardir,"python"))
 	sys.path.insert(1,pathToAdd)
-	
+
 
 from gsapi import *
 
@@ -23,7 +23,7 @@ from UIParameter import *
 
 
 
-""" this example generates stylistic markovian pattern to demonstrate passing GSPattern to C++ plugin
+""" this example generates stylistic markovian pattern to demonstrate passing Pattern to C++ plugin
 """
 #generalMidiMap
 
@@ -53,7 +53,7 @@ generateNewP = EventParameter()
 
 style = GSStyles.GSMarkovStyle(order=numSteps.value/(loopDuration.value+1),numSteps=int(numSteps.value),loopDuration=int(loopDuration.value))
 patterns = None
-# style = GSDBStyle(generatePatternOrdering = "increasing");
+# style = DatabaseStyle(generatePatternOrdering = "increasing");
 
 #  parameters enable simple UI bindings
 eachBarIsNew = BoolParameter()
@@ -66,7 +66,7 @@ def setup():
 	generateStyleIfNeeded(forceRebuild = True,forceParamUpdate = False,loadFromJSON = False)
 	generatePattern()
 	print "settingThingsUp"
-	
+
 
 def onTimeChanged(time):
 	""" called at eacch beat when pattern is playing
@@ -77,7 +77,7 @@ def onTimeChanged(time):
 	"""
 	if eachBarIsNew.value :
 		generatePattern()
-	
+
 
 
 def tagToPitch(tag):
@@ -89,7 +89,7 @@ def tagToPitch(tag):
 
 
 def mapMidi(pattern,midiMap):
-	if midiMap=="pitchNames" : 
+	if midiMap=="pitchNames" :
 		for e in pattern.events:
 			e.pitch = tagToPitch(e.tag)
 	else:
@@ -104,7 +104,7 @@ def mapMidi(pattern,midiMap):
 
 
 def generateStyleIfNeeded(forceRebuild = False,forceParamUpdate = False,loadFromJSON = False):
-	
+
 
 	global style
 	global styleSavingPath
@@ -118,13 +118,13 @@ def generateStyleIfNeeded(forceRebuild = False,forceParamUpdate = False,loadFrom
 			numSteps.value = style.numSteps
 			loopDuration.value = style.loopDuration
 		else:
-			forceParamUpdate=True 
+			forceParamUpdate=True
 			forceRebuild=True
-			
+
 	if forceRebuild:
 		print "startGenerating for "+searchPath+" : "+str(glob.glob(searchPath))
 		# patterns = dataSet.patterns#gsapi.GSIO.fromMidiCollection(searchPath,NoteToTagsMap=midiMap,TagsFromTrackNameEvents=False,desiredLength = int(loopDuration.value))
-		
+
 
 	if forceRebuild or forceParamUpdate :
 		style = GSStyles.GSMarkovStyle(order=numSteps.value/(loopDuration.value+1),numSteps=int(numSteps.value),loopDuration=int(loopDuration.value))
@@ -137,8 +137,8 @@ def generateStyleIfNeeded(forceRebuild = False,forceParamUpdate = False,loadFrom
 			print ("errror, no pattern found")
 
 
-		
-		
+
+
 
 def saveStyle():
 	style.saveToJSON(styleSavingPath)
@@ -160,7 +160,7 @@ def generatePattern():
 	newPattern = mapMidi(newPattern,GSPatternUtils.simpleDrumMap)
 	print 'newPattern set'
 	patternParameter.value = newPattern
-	
+
 
 
 if __name__ =='__main__':
@@ -170,7 +170,7 @@ if __name__ =='__main__':
 	numSteps.value = 32
 	generatePattern()
 	# params =  interface.getAllParameters()
-	
-	
-	
+
+
+
 	# patt.printEvents()

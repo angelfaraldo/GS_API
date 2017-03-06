@@ -11,7 +11,7 @@ if __name__ == '__main__':
     sys.path.insert(1, os.path.abspath(os.path.join(__file__, os.pardir, os.pardir, os.pardir)))
     from GSPatternTestUtils import *
 else:
-    from .GSPatternTestUtils import *
+    from .PatternTestUtils import *
 
 from gsapi import *
 from gsapi.MathUtils import *
@@ -59,28 +59,28 @@ class MarkovPatternTest(GSTestBase):
             self.markovChain = PatternMarkov(order=2, numSteps=4, loopDuration=loopDuration)
             self.markovChain.generateTransitionTableFromPatternList(self.patternList)
             tstP = self.markovChain.generatePattern()
-            print (tstP)
+            print(tstP)
             self.checkPatternValid(tstP)
             self.assertTrue(self.markovChain.__repr__()!="")
             self.assertTrue(self.markovChain.getAllPossibleStates())
             self.assertTrue(self.markovChain.getMatrixAtStep(0),"matrix failed");
 
         loopDuration = 32
-        
+
         self.cachedDataset.generateViewpoint("chords",sliceType=loopDuration)
-        
+
         self.patternList = self.cachedDataset.getAllSliceOfDuration(loopDuration,viewpointName="chords")
         _testIt();
         self.patternList = self.cachedDataset.getAllSliceOfDuration(loopDuration)
         _testIt();
 
-        
+
         # self.markovChain.plotMatrixAtStep(2)
         # self.markovChain.plotGlobalMatrix()
-    
-    
 
-       
+
+
+
 
     def test_Markov_1_32_8(self):
         self.buildMarkov(1, 32, 16)

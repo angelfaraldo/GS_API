@@ -7,7 +7,7 @@ from gsapi import *
 
 import gsapi.GSBassmineAnalysis as bassmine
 import gsapi.GSBassmineMarkov as markov
-# import gsapi.GSDescriptors
+# import gsapi.descriptors
 
 import matplotlib.pyplot as plt
 import json
@@ -22,13 +22,13 @@ style = {1: 'booka_shade', 2: 'mr_scruff'}
 # SELECT STYLE
 style_id = 2
 
-bass_path = os.path.abspath('../../corpus/bassmine/' + style[style_id] + '/bass')
-drum_path = os.path.abspath('../../corpus/bassmine/' + style[style_id] + '/drums')
+bass_path = os.path.abspath('../../corpora/bassmine/' + style[style_id] + '/bass')
+drum_path = os.path.abspath('../../corpora/bassmine/' + style[style_id] + '/drums')
 
-# Output folder (to use with Max this folder should be Bassmine-master/models/)
+# Output folder (to use with Max this folder should be bassmine-master/models/)
 _path = 'output/'
 
-# Analyse corpus and build Markov model
+# Analyse corpora and build Markov model
 MM, kick_patterns = bassmine.corpus_analysis(bass_path, drum_path)
 # Normalize transition matrices
 MM.normalize_model()
@@ -73,8 +73,8 @@ GSIO.toMidi(variation_pattern,name='variation')
 
 
 
-# syncDescriptor = GSDescriptors.GSDescriptorSyncopation()
-# densDescriptor = GSDescriptors.GSDescriptorDensity()
+# syncDescriptor = descriptors.DescriptorSyncopation()
+# densDescriptor = descriptors.Density()
 
 
 # experiment paramters

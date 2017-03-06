@@ -8,7 +8,7 @@ if __name__ == '__main__':
 
 
 from gsapi import *
-from .GSPatternTestUtils import *
+from .PatternTestUtils import *
 from gsapi.GSPatternUtils import *
 from gsapi.GSPitchSpelling import *
 
@@ -50,7 +50,7 @@ class DescriptorTests(GSTestBase):
 
         descriptor = GSDescriptors.GSDescriptorChord(forceMajMin=False,
                                                      allowDuplicates=True)
-        # GSIO.gsiolog.setLevel('INFO')
+        # GSIO.iolog.setLevel('INFO')
         harmonyDataset = GSDataset(midiGlob="*.mid",
                                    midiFolder=self.getLocalCorpusPath('harmony'),
                                    midiMap="pitchNames",

@@ -37,7 +37,7 @@ initgsapi (void)
   int err;
 
 
-  if (   (PyType_Ready (&Py_gsPatternType) < 0)
+  if (   (PyType_Ready (&Py_PatternType) < 0)
       // generated objects
       // || (generated_types_ready() < 0 )
   ) {
@@ -60,8 +60,8 @@ initgsapi (void)
         "Unable to import Numpy array from gsapi module (error %d)\n", err);
   }
 
-  Py_INCREF (&Py_gsPatternType);
-  PyModule_AddObject (m, "gspattern", (PyObject *) & Py_gsPatternType);
+  Py_INCREF (&Py_PatternType);
+  PyModule_AddObject (m, "gspattern", (PyObject *) & Py_PatternType);
   // Py_INCREF (&Py_filterType);
   // PyModule_AddObject (m, "digital_filter", (PyObject *) & Py_filterType);
   // Py_INCREF (&Py_filterbankType);

@@ -3,11 +3,12 @@ if __name__=='__main__':
 	import sys,os
 	pathToAdd = os.path.abspath(os.path.join(__file__,os.path.pardir,os.path.pardir,os.path.pardir,os.path.pardir,"python"))
 	sys.path.insert(1,pathToAdd)
-import VSTPlugin
-import JUCEAPI
-from UIParameter import *
-import glob,os
+import glob
+import os
 
+import JUCEAPI
+import VSTPlugin
+from UIParameter import *
 
 
 class Dummy(object):
@@ -20,7 +21,7 @@ class Dummy(object):
 dummy = Dummy(8)
 test4 = EnumParameter(choicesList={"lala":dummy.fun,"lolo":{"fesse":["loulou"]}},name="list")
 
-listOfStyle = map(os.path.basename,glob.glob(os.path.join(VSTPlugin.localDirectory,"midi","*.mid")))
+listOfStyle = map(os.path.basename, glob.glob(os.path.join(VSTPlugin.localDirectory, "midi", "*.mid")))
 listOfStyle+=["*"]
 styleParam = EnumParameter(choicesList = listOfStyle)
 
@@ -52,8 +53,8 @@ def createLayout():
 	test4.setBoundsRect(area)
 
 def configureParams():
-	VSTPlugin.loopDuration.setMinMax(1,16).setCallbackFunction(VSTPlugin.generateStyleIfNeeded,forceParamUpdate=True)
-	VSTPlugin.numSteps.setMinMax(4,32).setCallbackFunction(VSTPlugin.generateStyleIfNeeded,forceParamUpdate=True)
+	VSTPlugin.loopDuration.setMinMax(1, 16).setCallbackFunction(VSTPlugin.generateStyleIfNeeded, forceParamUpdate=True)
+	VSTPlugin.numSteps.setMinMax(4, 32).setCallbackFunction(VSTPlugin.generateStyleIfNeeded, forceParamUpdate=True)
 	VSTPlugin.generateNewP.setCallbackFunction(VSTPlugin.generatePattern)
 	styleParam.setCallbackFunction(styleChanged,styleParam.value)
 	# add others ..
@@ -63,11 +64,11 @@ def getAllParameters():
 	""" gets caled when parameters are built in VST host
 	should return a list of UIParams
 	"""
-	
-	
+
+
 	configureParams()
 	createLayout()
-	# add existing 
+	# add existing
 	res = []
 	res+=[VSTPlugin.loopDuration]
 	res+=[VSTPlugin.numSteps]
@@ -96,17 +97,17 @@ def updateList(param):
 	if(callable(param.value)):
 		print "calling",param.value
 		param.value()
-		
+
 
 def styleChanged(style):
 
 	style = styleParam.value
 	VSTPlugin.dataSet.importMIDI(style)
 	print(VSTPlugin.dataSet.files)
-	
+
 	# VSTPlugin.setup()
 	# VSTPlugin.generateStyleIfNeeded(forceRebuild = True,forceParamUpdate = False,loadFromJSON = False)
-	
+
 
 
 if __name__ == '__main__':
@@ -116,11 +117,11 @@ if __name__ == '__main__':
 	VSTPlugin.setup()
 	print getAllParameters()
 
-	VSTPlugin.generateNewP.addListener('tst',dummy.fun)
+	VSTPlugin.generateNewP.addListener('tst', dummy.fun)
 	VSTPlugin.numSteps.value = 32
 	VSTPlugin.generateNewP.setValueFrom('tst', 1)
 	styleChanged('*')
 
-	
-	
+
+
 

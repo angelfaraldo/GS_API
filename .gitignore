@@ -27,3 +27,4 @@ python/sandbox/midi/*
 .coverage
 htmlcov/
 coverage.xml
+.idea/

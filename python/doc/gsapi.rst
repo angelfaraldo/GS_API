@@ -6,15 +6,9 @@ gsapi package
     :undoc-members:
     :show-inheritance:
 
-
 .. toctree::
-    gsapi.GSPattern
-    gsapi.GSIO
-    gsapi.GSStyles
-    gsapi.GSPatternTransformers
-    gsapi.GSBassmine
-
-
-
-
-
+    gsapi.Pattern
+    gsapi.IO
+    gsapi.Styles
+    gsapi.PatternTransformers
+    gsapi.Bassmine

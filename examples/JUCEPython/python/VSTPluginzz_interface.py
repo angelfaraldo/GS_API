@@ -1,7 +1,6 @@
-import VSTPluginzz as VSTPlugin
 import JUCEAPI
+import VSTPluginzz as VSTPlugin
 from UIParameter import *
-
 
 
 class Dummy(object):
@@ -53,11 +52,11 @@ def getAllParameters():
 	""" gets caled when parameters are built in VST host
 	should return a list of UIParams
 	"""
-	
-	
+
+
 	configureParams()
 	createLayout()
-	# add existing 
+	# add existing
 	res = []
 	res+=[VSTPlugin.loopDuration]
 	res+=[VSTPlugin.numSteps]
@@ -86,9 +85,9 @@ def updateList(param):
 	if(callable(param.value)):
 		print "calling",param.value
 		param.value()
-		
 
-	
+
+
 
 
 if __name__ == '__main__':
@@ -102,6 +101,6 @@ if __name__ == '__main__':
 	VSTPlugin.numSteps.value = 32
 	VSTPlugin.generateNewP.setValueFrom('tst', 1)
 
-	
-	
+
+
 
