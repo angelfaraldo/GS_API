@@ -7,7 +7,7 @@ if __name__ == '__main__':
     sys.path.insert(1, os.path.abspath(os.path.join(__file__, os. pardir, os.pardir, os.pardir)))
     from GSPatternTestUtils import *
 else:
-    from .PatternTestUtils import *
+    from .test_pattern_utils import *
 from gsapi import *
 
 

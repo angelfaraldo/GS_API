@@ -1,15 +1,14 @@
 from __future__ import absolute_import, division, print_function
 
-from .AgnosticDensityTest import *
-from .DescriptorTests import *
-from .IOTest import *
-from .MarkovPatternTest import *
-from .PatternTest import *
-from .PatternTestUtils import *
-from .StylesTest import *
-from .ViewpointTest import *
-
+from .test_agnostic_density import *
+from .test_descriptor import *
+from .test_io import *
+from .test_markov_pattern import *
+from .test_pattern import *
+from .test_pattern_utils import *
+from .test_styles import *
+from .test_viewpoint import *
 
 if __name__ == "__main__":
-    # shortcut to run all tests:
+    # Run all tests:
     runTest(profile=False, getStat=False)

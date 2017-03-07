@@ -8,7 +8,7 @@ if __name__ == '__main__':
 
 
 from gsapi import *
-from .PatternTestUtils import *
+from .test_pattern_utils import *
 from gsapi.GSPatternUtils import *
 from gsapi.GSPitchSpelling import *
 

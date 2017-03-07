@@ -10,7 +10,7 @@ if __name__ == '__main__':
 
 from gsapi import *
 import random,glob
-from .PatternTestUtils import *
+from .test_pattern_utils import *
 
 
 class GSViewpointTest(GSTestBase):
