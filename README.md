@@ -1,4 +1,4 @@
-GsAPI
+gsapi
 =====
 [![Build Status](https://travis-ci.org/GiantSteps/GS_API.svg?branch=master)](https://travis-ci.org/GiantSteps/GS_API)
 [![codecov](https://codecov.io/gh/GiantSteps/GS_API/branch/master/graph/badge.svg)](https://codecov.io/gh/GiantSteps/GS_API)
@@ -8,7 +8,7 @@ The gsapi is a Python/C++ library for manipulating musical symbolic data.
 
 Overview
 --------
-The gsapi provides Python/C++ classes and interface for dealing with musical data. The main features are:
+The gsapi (GiantSteps API) provides Python/C++ classes and interface for dealing with musical data. Its main features are:
 
 * flexible input/output from/to JSON/MIDI
 * Rhythm generation, both agnostic and based on styles.
@@ -25,7 +25,7 @@ pip install gsapi
 
 **Python**
 
-The python code resides in the **python** folder:
+The python modules resides in the **gsapi** subfolder:
 
 * Build:
 ```
@@ -43,8 +43,8 @@ python setup.py install
 ```python
 from gsapi import *
 p = Pattern()
-p.addEvent(GSPatternEvent(startTime=0, duration=1, pitch=64, velocity=127, tag="Kick")
-p.addEvent(GSPatternEvent(1, 3, 62, 51, "Snare")
+p.addEvent(Event(startTime=0, duration=1, pitch=64, velocity=127, tag="Kick")
+p.addEvent(Event(1, 3, 62, 51, "Snare")
 ```
 will fill *Pattern* p with:
 * one event tagged Kick starting at 0 with a duration of 1 a Midi Note Number of 64 and a velocity of 127
@@ -54,7 +54,7 @@ will fill *Pattern* p with:
 * get All loops from a dataset
 ```python
 from gsapi import *
-dataset = GSDataSet(midiFolder="The/Midi/Folder/To/Crawl", midiGlob="*.mid", midiMap=GSIO.generalMidiMap)
+dataset = Dataset(midiFolder="The/Midi/Folder/To/Crawl", midiGlob="*.mid", midiMap=io.generalMidiMap)
 allPatternsSliced = []
 for midiPattern in dataset.patterns:
 	for sliced in midiPattern.splitInEqualLengthPatterns(16): # split in 16 beat slices
@@ -95,7 +95,7 @@ NoteToTagsMap = {"Kick":30,
                  "Snare":(32,4),
                  "ClosedHihat":[(33,'*'),45]
                  }
-listOfGSPatterns = GSIO.fromMidiCollection(midiGlobPath, NoteToTagsMap)
+listOfGSPatterns = io.fromMidiCollection(midiGlobPath, NoteToTagsMap)
 ```
 
 will return a list of *Pattern* with event being tagged:
@@ -110,11 +110,8 @@ All submodules within API provide help by typing help(Name of the module)
 
 ```python
 help(Pattern)
-help(GSBassmineAnalysis)
+help(BassmineAnalysis)
 ```
-
-## Drum and bass generative example
-
 
 ### Drums example
 
@@ -127,7 +124,7 @@ defaultMidiFolder = "../../corpora/drums"
 
 #Use 'Dataset' to extract the MIDI file
 
-dataset = GSDataset(midiFolder=defaultMidiFolder, midiGlob="motown.mid", midiMap=GSIO.generalMidiMap, checkForOverlapped=True)
+dataset = Dataset(midiFolder=defaultMidiFolder, midiGlob="motown.mid", midiMap=io.generalMidiMap, checkForOverlapped=True)
 
 #use the function'splitInEqualLengthPatterns' to split the 
 #contents of the dataset and to set the minimum "grain" or "timeframe" of the analysis
@@ -176,7 +173,6 @@ print kickAsList
 
 The following script commands present examples of Bassline rhythmic analysis for generative processes using the gsapi.
 
-
 ```python
 import gsapi.GSBassmineAnalysis as bassmine
 import gsapi.GSBassmineMarkov as markov
@@ -192,7 +188,6 @@ The implemented algorithm builds two Markov models.
 First, contains the transition probabilities between bass beat patterns (temporal)
 Second, contains the concurrency probabilities between kick-drum and bass beat patterns.
 Moreover, the initial probabilites of events are computed, used to trigger the generation.
-
 
 
 ```python
