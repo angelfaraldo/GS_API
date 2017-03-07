@@ -1,6 +1,13 @@
+#!/usr/bin/env python
+# encoding: utf-8
+"""This module contains tests."""
+
 from __future__ import absolute_import, division, print_function
 
-from .test_agnostic_density import *
+
+# Import all submodules
+# from .test_agnostic_density import *
+from . import test_agnostic_density
 from .test_descriptor import *
 from .test_io import *
 from .test_markov_pattern import *

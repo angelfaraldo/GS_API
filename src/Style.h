@@ -1,27 +1,24 @@
 /*
   ==============================================================================
 
-    GSStyle.h
+    Style.h
     Created: 8 Jun 2016 9:11:32am
     Author:  martin hermant
 
   ==============================================================================
 */
 
-#ifndef GSSTYLE_H_INCLUDED
-#define GSSTYLE_H_INCLUDED
+#ifndef STYLE_H_INCLUDED
+#define STYLE_H_INCLUDED
 
 #include "JSONSerializable.h"
 
-class GSStyle:public JSONSerializable{
+class Style:public JSONSerializable{
 public:
-	GSStyle();
-	virtual ~GSStyle();
-	
-	
+	Style();
+	virtual ~Style();
 	virtual bool fillJSONData(json &) override;
 	virtual bool getJSONData(const json &) override;
 };
 
-
-#endif  // GSSTYLE_H_INCLUDED
+#endif  // STYLE_H_INCLUDED

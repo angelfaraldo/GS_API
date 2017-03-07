@@ -10,7 +10,6 @@
 
 #include "JSONSerializable.h"
 
-
 bool JSONSerializable::loadJSON(string path){
 	bool success = true;
 	std::fstream fs;

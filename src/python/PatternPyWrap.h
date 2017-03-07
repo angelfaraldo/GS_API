@@ -1,7 +1,7 @@
 /*
  ==============================================================================
 
- GSPatternPyWrap.h
+ PatternPyWrap.h
  Created: 19 Jun 2016 6:52:28pm
  Author:  Martin Hermant
 
@@ -13,14 +13,14 @@
 #include "PythonUtils.h"
 
 
-#include "GSPattern.h"
-#include "GSPatternEventPyWrap.h"
+#include "Pattern.h"
+#include "PatternEventPyWrap.h"
 
 
-class GSPatternPyWrap{
+class PatternPyWrap{
 public:
 
-  GSPatternPyWrap(){
+  PatternPyWrap(){
     NameObjName = PyFromString("name");
     DurationObjName = PyFromString("duration");
     EventsObjName = PyFromString("events");
@@ -34,7 +34,7 @@ public:
   PyTypeObject * gsPatternType;
 
 
-  ~GSPatternPyWrap(){
+  ~PatternPyWrap(){
     Py_CLEAR(NameObjName);
     Py_CLEAR(DurationObjName);
     Py_CLEAR(EventsObjName);
@@ -46,30 +46,25 @@ public:
   void init(){
     gsapiModule = PyImport_ImportModule("gsapi");
     PyObject * gsapiDict = PyModule_GetDict(gsapiModule);
-    gsPatternType = (PyTypeObject*)PyDict_GetItemString(gsapiDict, "GSPattern");
+    gsPatternType = (PyTypeObject*)PyDict_GetItemString(gsapiDict, "Pattern");
     eventWrap.gsPatternEventType = (PyTypeObject*)PyDict_GetItemString(gsapiDict, "GSPatternEvent");
 //    Py_DecRef(gsapiDict);
     //
-    //		GSPattern p;
+    //		Pattern p;
     //		p.name = "test";
     //		GeneratePyObj(&p);
-
-
-
   }
 
-  GSPattern* GenerateFromObj(PyObject* o,GSPattern * original=nullptr){
+  Pattern* GenerateFromObj(PyObject* o,Pattern * original=nullptr){
     if(!o)return nullptr;
     PyObject ** obj = _PyObject_GetDictPtr(o);
     if(!obj){DBG("weird class passed back"); return nullptr;}
     PyObject * dict = *obj;
 
-
-
-    GSPattern * p = original;
+    Pattern * p = original;
     if(!PyDict_Check(dict)){DBG("no dict passed back"); return p;}
     if(p== nullptr){
-      p = new GSPattern();
+      p = new Pattern();
     }
     {
       PyObject * n = PyDict_GetItem(dict, NameObjName);
@@ -108,7 +103,7 @@ public:
     return p;
   }
 
-  PyObject*  GeneratePyObj(GSPattern * p,PyObject * existing=nullptr){
+  PyObject*  GeneratePyObj(Pattern * p,PyObject * existing=nullptr){
     if(!p)return nullptr;
     PyObject * res = existing;
 
@@ -132,7 +127,6 @@ public:
       Py_DecRef(n);
     }
 
-
     {
       int evSize = p->events.size();
       PyObject * n = PyList_New(evSize);
@@ -145,25 +139,17 @@ public:
       Py_DecRef(n);
     }
 
-
-
-
-
     return res;
   }
 
-
 private:
-
 
   PyObject * NameObjName;
   PyObject * DurationObjName;
   PyObject * EventsObjName;
   PyObject * timeSignatureName;
   
-  GSPatternEventPyWrap eventWrap;
-  
+  PatternEventPyWrap eventWrap;
 };
-
 
 #endif  // GSPATTERNPYWRAP_H_INCLUDED

@@ -11,16 +11,12 @@
 #ifndef PYTHONUTILS_H_INCLUDED
 #define PYTHONUTILS_H_INCLUDED
 
-
-
 #define _xcat(x,y) _cat(x,y)
 #define _cat(x,y) x##y
 #define _toxstr(x) _tostr(x)
 #define _tostr(x) #x
 
-
 #include _toxstr(PYTHON_HEADER)
-
 
 //#define PY3
 
@@ -32,13 +28,10 @@
 #define PyFromString(x) PyString_FromString(x)
 #endif
 
-
 #include <iostream>
-
 
 #ifndef DBG
 #define DBG(x) std::cout << x << '\n';
 #endif
-
 
 #endif  // PYTHONUTILS_H_INCLUDED

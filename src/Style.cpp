@@ -1,22 +1,20 @@
 /*
   ==============================================================================
 
-    GSStyle.cpp
+    Style.cpp
     Created: 8 Jun 2016 9:11:32am
     Author:  martin hermant
 
   ==============================================================================
 */
 
-#include "GSStyle.h"
+#include "Style.h"
 
 
-
-bool GSStyle::fillJSONData(json &) {
+bool Style::fillJSONData(json &) {
 	return false;
 };
 
-
-bool GSStyle::getJSONData(const json &) {
+bool Style::getJSONData(const json &) {
 	return false;
 };

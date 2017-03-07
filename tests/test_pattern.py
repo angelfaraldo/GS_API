@@ -7,16 +7,15 @@ import sys
 
 if __name__ == '__main__':
     sys.path.insert(1, os.path.abspath(os.path.join(__file__, os.pardir, os.pardir, os.pardir)))
-    from GSPatternTestUtils import *
+    from test_pattern_utils import *
 else:
     from .test_pattern_utils import *
 
 from gsapi import *
-import random,glob
+import random, glob
 
 
 class GSPatternTest(GSTestBase):
-
     def generateCachedDataset(self):
         return GSDataset(midiGlob="funkyfresh.mid",
                          midiFolder=self.getLocalCorpusPath('drums'),
@@ -52,7 +51,7 @@ class GSPatternTest(GSTestBase):
         for bp in self.cachedDataset.patterns:
             originPattern = bp.copy()
             p = bp.getPatternForTimeSlice(0, 4)
-            p.timeStretch(32/4.0)
+            p.timeStretch(32 / 4.0)
             p.alignOnGrid(1)
             # p.removeOverlapped()
             p.fillWithSilences(maxSilenceTime=1)
@@ -69,5 +68,3 @@ class GSPatternTest(GSTestBase):
 
 if __name__ == '__main__':
     runTest(profile=True, getStat=False)
-
-

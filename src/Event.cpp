@@ -1,20 +1,21 @@
 /*
   ==============================================================================
 
-    GS_API.h
-    Created: 8 Jun 2016 9:13:23am
+    Event.cpp
+    Created: 8 Jun 2016 5:04:28pm
     Author:  martin hermant
 
   ==============================================================================
 */
 
-#ifndef GS_API_H_INCLUDED
-#define GS_API_H_INCLUDED
+#include "Event.h"
 
-#include "GSPattern.h"
-#include "GSStyle.h"
+Event Event::empty;
 
+vector<string>  Event::getTagNames() const{
+	return eventTags;	
+}
 
-
-
-#endif  // GS_API_H_INCLUDED
+bool Event::isValid(){
+    return duration>0;
+}

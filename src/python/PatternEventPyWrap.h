@@ -1,24 +1,24 @@
 /*
  ==============================================================================
 
- GSPatternEventPyWrap.h
+ PatternEventPyWrap.h
  Created: 19 Jun 2016 6:52:46pm
  Author:  Martin Hermant
 
  ==============================================================================
  */
 
-#ifndef GSPATTERNEVENTPYWRAP_H_INCLUDED
-#define GSPATTERNEVENTPYWRAP_H_INCLUDED
+#ifndef PATTERNEVENTPYWRAP_H_INCLUDED
+#define PATTERNEVENTPYWRAP_H_INCLUDED
 
 #include "PythonUtils.h"
-#include "GSPatternEvent.h"
+#include "Event.h"
 
 
-class GSPatternEventPyWrap{
+class PatternEventPyWrap{
 public:
 
-  GSPatternEventPyWrap(){
+  PatternEventPyWrap(){
 
     StartObjName = PyFromString("startTime");
     DurationObjName = PyFromString("duration");
@@ -28,7 +28,8 @@ public:
 
     init();
   }
-  ~GSPatternEventPyWrap(){
+
+  ~PatternEventPyWrap(){
     Py_CLEAR(TagsObjName);
     Py_CLEAR(DurationObjName);
     Py_CLEAR(StartObjName);
@@ -37,20 +38,18 @@ public:
   }
 
   void init(){
-
-
   }
 
   PyTypeObject * gsPatternEventType;
 
-  GSPatternEvent* GenerateFromObj(PyObject* o){
-    GSPatternEvent * e = nullptr;
+  Event* GenerateFromObj(PyObject* o){
+    Event * e = nullptr;
     PyObject ** obj = _PyObject_GetDictPtr(o);
     if(!obj){DBG("weird class passed back"); return nullptr;}
     PyObject * dict = *obj;
     if(!PyDict_Check(dict)){DBG("no dict passed back");}
     else{
-      e = new GSPatternEvent();
+      e = new Event();
       {
         PyObject * n = PyDict_GetItem(dict, StartObjName);
         if(n){e->start = PyFloat_AsDouble(n);}
@@ -91,18 +90,13 @@ public:
             e->eventTags.push_back(PyToString(stringOb));
           }
           else{DBG("wrong type of tags : " << n->ob_type->tp_name);}
-
         }
       }
-
     }
-
-
-
     return e;
   }
 
-  PyObject * generatePyObj(GSPatternEvent * e,PyObject * original=nullptr){
+  PyObject * generatePyObj(Event * e,PyObject * original=nullptr){
     PyObject * res = original;
 
     PyObject* start = PyFloat_FromDouble(e->start);
@@ -150,10 +144,6 @@ public:
   PyObject*  StartObjName ;
   PyObject*  PitchObjName ;
   PyObject*  VelocityObjName ;
-  
-  
 };
 
-
-
-#endif  // GSPATTERNEVENTPYWRAP_H_INCLUDED
+#endif  // PATTERNEVENTPYWRAP_H_INCLUDED

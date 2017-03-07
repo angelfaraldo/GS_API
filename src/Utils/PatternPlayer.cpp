@@ -1,17 +1,18 @@
 /*
   ==============================================================================
 
-    GSPatternPlayer.cpp
+    PatternPlayer.cpp
     Created: 8 Jun 2016 6:48:48pm
     Author:  martin hermant
 
   ==============================================================================
 */
 
-#include "GSPatternPlayer.h"
+#include "PatternPlayer.h"
 #include <cmath>
 
-void GSPatternPlayer::updatePlayHead(double pH){
+
+void PatternPlayer::updatePlayHead(double pH){
     
 	lastPlayHead=playHead;
 	if(isLooping && currentPattern.duration>0){
@@ -22,9 +23,7 @@ void GSPatternPlayer::updatePlayHead(double pH){
 		
 		return;
 	}
-	
 
-	
 	vector<MIDIMapEntry> newNotes;
 	
 	for(auto & n:currentPattern.events){
@@ -38,8 +37,7 @@ void GSPatternPlayer::updatePlayHead(double pH){
 		}
 	}
 
-	
-	
+
 //	add new notes on
 	currentNoteOn.clear();
 	
@@ -54,8 +52,6 @@ void GSPatternPlayer::updatePlayHead(double pH){
 		if(!found){
 			currentNoteOn.push_back(nn);
 		}
-		
-		
 	}
 	
 //	add note offs
@@ -73,19 +69,16 @@ void GSPatternPlayer::updatePlayHead(double pH){
 		}
 	}
 	currentNote = newNotes;
-	
-	
-	
-	
 }
-void GSPatternPlayer::setPattern(const GSPattern &p){
+
+void PatternPlayer::setPattern(const Pattern &p){
 	currentPattern = p;
 }
 
-void GSPatternPlayer::stop(){
+void PatternPlayer::stop(){
 	if(currentNoteOn.size()==0)currentNoteOff.clear();
 	else{
-	for( auto & n:currentNoteOn){
+	for(auto & n:currentNoteOn){
 		currentNoteOff.push_back(n);
 	}
 	currentNoteOn.clear();
@@ -95,8 +88,7 @@ void GSPatternPlayer::stop(){
 vector<MIDIMapEntry> &GSPatternPlayer::getCurrentNoteOn(){return currentNoteOn;};
 vector<MIDIMapEntry> &GSPatternPlayer::getCurrentNoteOff(){return currentNoteOff;};
 
-
-void GSPatternPlayer::setMidiMapper(GSPatternMidiMapper * mmap){
+void PatternPlayer::setMidiMapper(PatternMidiMapper * mmap){
 	if(ownedMapper!=nullptr){
 		delete ownedMapper;
 	}

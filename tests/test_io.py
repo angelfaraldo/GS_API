@@ -1,8 +1,11 @@
+#!/usr/bin/env python
+# encoding: utf-8
+
 # python 3 compatibility
 from __future__ import absolute_import, division, print_function
 
 import unittest
-import os,sys
+import os, sys
 
 if __name__ == '__main__':
     sys.path.insert(1, os.path.abspath(os.path.join(__file__, os.pardir, os.pardir, os.pardir)))
@@ -28,16 +31,16 @@ class GSIOTest(GSTestBase):
         for p in self.cachedDataset:
             print(p.name)
             self.assertTrue(len(p.events)>0)
-            exportedPath = GSIO.toMidi(p,folderPath="../../sandbox/midi/",name=p.name)
-            exportedPath =os.path.abspath(exportedPath)
+            exportedPath = GSIO.toMidi(p,folderPath="../../sandbox/midi/", name=p.name)
+            exportedPath = os.path.abspath(exportedPath)
             self.assertTrue(os.path.exists(exportedPath))
             exportedP = GSIO.fromMidi(midiPath=exportedPath)
 
-            self.checkPatternEquals(p,exportedP,tolerance = 0.02) # we have roundings error when converting to beats back and forth...
+            self.checkPatternEquals(p, exportedP, tolerance=0.02) # we have roundings error when converting to beats back and forth...
 
     def test_ImportExportJSON(self):
         for p in self.cachedDataset:
-            exportedPath = GSIO.toJSONFile(p,folderPath="../../sandbox/json/",useTagIndexing=False,conserveTuple=False)
+            exportedPath = GSIO.toJSONFile(p, folderPath="../../sandbox/json/",useTagIndexing=False,conserveTuple=False)
             jsonPattern = GSIO.fromJSONFile(filePath=os.path.abspath(exportedPath),conserveTuple=False)
             self.checkPatternEquals(p,jsonPattern,checkViewpoints=False)
 

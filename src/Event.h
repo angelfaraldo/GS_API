@@ -1,24 +1,24 @@
 /*
   ==============================================================================
 
-    GSPatternEvent.h
+    Event.h
     Created: 8 Jun 2016 4:46:34pm
     Author:  martin hermant
 
   ==============================================================================
 */
 
-#ifndef GSPATTERNEVENT_H_INCLUDED
-#define GSPATTERNEVENT_H_INCLUDED
+#ifndef EVENT_H_INCLUDED
+#define EVENT_H_INCLUDED
 
 #include <vector>
 #include <string>
 using namespace std;
 
-class GSPatternEvent{
+class Event{
 public:
-    GSPatternEvent():duration(0){}
-	GSPatternEvent(const double _start,
+    Event():duration(0){}
+	Event(const double _start,
 				   const double _duration,
 				   const int _pitch,
 				   const int _velocity,
@@ -31,8 +31,7 @@ public:
 	velocity(_velocity),
 	eventTags(tags)
 	{}
-	
-	
+
 	double start;
 	double duration;
 	int pitch;
@@ -43,12 +42,10 @@ public:
 
 	double getEndTime(){return start+duration;}
 
-    static GSPatternEvent empty;
+    static Event empty;
 	
 	 vector<string> getTagNames() const;
 	
 };
 
-
-
-#endif  // GSPATTERNEVENT_H_INCLUDED
+#endif  // EVENT_H_INCLUDED

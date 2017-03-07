@@ -1,4 +1,4 @@
-import os,sys
+import os, sys
 import subprocess
 from subprocess import Popen
 
@@ -7,7 +7,7 @@ scriptPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 
 
 def getCmd(cmd,useShell=False):
-	proc = Popen(cmd,shell = useShell,stdout=subprocess.PIPE);
+	proc = Popen(cmd,shell = useShell,stdout=subprocess.PIPE)
 	proc.wait()
 	res = ""
 	with proc.stdout as p:
@@ -15,8 +15,8 @@ def getCmd(cmd,useShell=False):
 	if( res and res[-1]=='\n') : res = res[:-1]
 	return res
 
-JUCEPyFolder = os.path.abspath(os.path.join(scriptPath,os.pardir));
-GSAPIPythonFolder = os.path.abspath(os.path.join(JUCEPyFolder,os.pardir,os.pardir,"python"));
+JUCEPyFolder = os.path.abspath(os.path.join(scriptPath,os.pardir))
+GSAPIPythonFolder = os.path.abspath(os.path.join(JUCEPyFolder,os.pardir,os.pardir,"python"))
 print GSAPIPythonFolder
 os.chdir(JUCEPyFolder)
 pyEnvFolder = str(os.path.abspath('pythonEnv'))

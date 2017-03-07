@@ -1,19 +1,18 @@
 /*
  ==============================================================================
 
- GSPatternPlayer.h
+ PatternPlayer.h
  Created: 8 Jun 2016 6:48:48pm
  Author:  martin hermant
 
  ==============================================================================
  */
 
-#ifndef GSPATTERNPLAYER_H_INCLUDED
-#define GSPATTERNPLAYER_H_INCLUDED
+#ifndef PATTERNPLAYER_H_INCLUDED
+#define PATTERNPLAYER_H_INCLUDED
 
 
-
-#include "GSPattern.h"
+#include "Pattern.h"
 #include <map>
 
 typedef struct MIDIMapEntry{
@@ -24,21 +23,18 @@ typedef struct MIDIMapEntry{
 	double endTime;
 }MIDIMapEntry;
 
-
-
-class GSPatternMidiMapper{
+class PatternMidiMapper{
 public:
-	virtual ~GSPatternMidiMapper(){};
+	virtual ~PatternMidiMapper(){};
 
-	virtual vector<MIDIMapEntry> getMIDINoteForEvent(const GSPatternEvent * e) =0;
+	virtual vector<MIDIMapEntry> getMIDINoteForEvent(const PatternEvent * e) =0;
 
 };
 
-
-class GSDummyMapper:public GSPatternMidiMapper{
+class DummyMapper:public PatternMidiMapper{
 public:
 	int baseNote = 0;
-	vector<MIDIMapEntry> getMIDINoteForEvent(const GSPatternEvent * e) override{
+	vector<MIDIMapEntry> getMIDINoteForEvent(const PatternEvent * e) override{
 		vector<MIDIMapEntry> res;
 //		for(auto & ev:e.eventTags){
 			res.push_back(MIDIMapEntry(1,e->pitch+baseNote,e->velocity));
@@ -48,9 +44,8 @@ public:
 
 };
 
-class GSLiveMapper:public GSPatternMidiMapper{
+class LiveMapper:public PatternMidiMapper{
 public:
-
 	std::map<string,int> tagToLiveMidi = {
 		{"Kick",36},
 		{"Snare",40},
@@ -60,7 +55,7 @@ public:
 		{"Rimshot",37},
 		{"LowConga",43},
 		{"HiConga",47}};
-	vector<MIDIMapEntry> getMIDINoteForEvent(const GSPatternEvent * e) override{
+	vector<MIDIMapEntry> getMIDINoteForEvent(const PatternEvent * e) override{
 		vector<MIDIMapEntry> res;
 		vector<string> tags = e->getTagNames();
 		for(auto & t:tags){
@@ -70,10 +65,9 @@ public:
 		}
 		return res;
 	}
-
 };
 
-class GSPatternPlayer{
+class PatternPlayer{
 public:
 
 	typedef struct{
@@ -82,7 +76,7 @@ public:
 		double startTime;
 	}MIDINoteEntries;
 
-	GSPatternPlayer(GSPatternMidiMapper * mmap):isLooping(true),ownedMapper(mmap){}
+	PatternPlayer(PatternMidiMapper * mmap):isLooping(true),ownedMapper(mmap){}
 
 
 	void updatePlayHead(double pH);
@@ -90,26 +84,20 @@ public:
 	vector<MIDIMapEntry> &getCurrentNoteOff();
 
 
-	GSPattern  currentPattern;
+	Pattern  currentPattern;
 
-	void setMidiMapper(GSPatternMidiMapper * mmap);
-	void setPattern(const GSPattern &);
+	void setMidiMapper(PatternMidiMapper * mmap);
+	void setPattern(const Pattern &);
 	void stop();
 	bool isLooping;
 private:
 
 	double playHead,lastPlayHead;
-	GSPatternMidiMapper * ownedMapper;
+	PatternMidiMapper * ownedMapper;
 
 	vector<MIDIMapEntry> currentNote;
 	vector<MIDIMapEntry> currentNoteOn;
 	vector<MIDIMapEntry> currentNoteOff;
-
-
-
-
 };
 
-
-
-#endif  // GSPATTERNPLAYER_H_INCLUDED
+#endif  // PATTERNPLAYER_H_INCLUDED
