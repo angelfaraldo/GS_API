@@ -52,7 +52,7 @@ def getAllDescriptorsClasses():
 
 class GSTestBase(unittest.TestCase):
     """
-    helper function for test classes.
+    helper function for tests classes.
     """
     __cachedDataset = None
 
@@ -139,5 +139,5 @@ class GSTestBase(unittest.TestCase):
     def setUp(self):
         testLog.info(
         '-------------------------------------\n' \
-        'Starting test: '+ self._testMethodName +\
+        'Starting tests: '+ self._testMethodName +\
         '-------------------------------------')

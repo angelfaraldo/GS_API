@@ -1,17 +1,20 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+#!/usr/bin/env python
+# encoding: utf-8
 
+from __future__ import absolute_import, division, print_function
 
 from setuptools import setup, find_packages
+
 from distutils.extension import Extension
 
 
-# legacy imports
+# LEGACY IMPORTS
+# ==============
 # from Cython.Distutils import build_ext
 # import distutils.ccompiler
 # import utils.parallelComp
 # distutils.ccompiler.CCompiler.compile = utils.parallelComp.parallelCCompile
+
 
 def checkLazySetupCommands():
     # utility when compiling from IDE, last uncommented executes desired action
@@ -30,22 +33,22 @@ def checkLazySetupCommands():
 
 if __name__ == '__main__':
     import sys
-    from gsapi import *
-    print ("gsapi value%s" % getGSAPIFullVersion())
+    from gsapi.version import *
+    print("gsapi value%s" % getGsapiFullVersion())
     checkLazySetupCommands()
 
 # for now python-midi is not officially on pip3 so we need to install it manually and it's name become midi...
 midiRequiredName = 'midi' if sys.version_info >= (3, 0) else 'python-midi'
 
 setup(name='gsapi',
-      version=getGSAPIFullVersion(),
+      version=getGsapiFullVersion(),
       description='Python Symbolic Music Manipulation Tools',
       long_description="",
-      author='Martin Hermant, Ángel Faraldo, Pere Calopa',
+      author='Martin Hermant, Angel Faraldo, Pere Calopa',
       author_email='angel.faraldo@upf.edu',
       url='https://github.com/Giantsteps/gsapi',
       license='',
-      packages=find_packages(exclude=['utils', 'gen', 'test', 'docs']),
+      packages=find_packages(exclude=['utils', 'gen', 'tests', 'docs']),
       # ext_modules=[gsapiModule],
       # package_data={'gsapi': package_data},
       # exclude_package_data={'': ['tests', 'docs']},
@@ -54,6 +57,5 @@ setup(name='gsapi',
       test_suite='nose.collector',
       install_requires=[midiRequiredName],
       # dependency_links = ['https://github.com/vishnubob/python-midi.git@feature/python3#egg="midi"'],
-      zip_safe=True
-      # classifiers=classifiers
-      )
+      zip_safe=True)
+      # classifiers=classifiers)

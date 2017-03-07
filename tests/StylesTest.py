@@ -1,4 +1,3 @@
-# python 3 compatibility
 from __future__ import absolute_import, division, print_function
 
 import os
@@ -6,13 +5,13 @@ import sys
 
 if __name__ == '__main__':
     sys.path.insert(1, os.path.abspath(os.path.join(__file__, os.pardir, os.pardir, os.pardir)))
-    from GSPatternTestUtils import *
-    from gsapi.GSPitchSpelling import *
-    from gsapi.GSPatternUtils import *
+    from .PatternTestUtils import *
+    from python.gsapi.utils.pitchSpelling import *
+    from python.gsapi.patterns.utils import *
 else:
-  from .PatternTestUtils import *
-  from python.gsapi.patterns.utils import *
-  from python.gsapi.utils.pitchSpelling import *
+    from .PatternTestUtils import *
+    from python.gsapi.utils.pitchSpelling import *
+    from python.gsapi.patterns.utils import *
 from gsapi import *
 
 
@@ -65,7 +64,7 @@ class GSStylesTest(GSTestBase):
       midiPattern.setDurationFromLastEvent()
       print(chordPattern)
       print(midiPattern)
-      GSIO.toMidi(midiPattern,folderPath="../../sandbox/chordGen",name="test")
+      GSIO.toMidi(midiPattern,folderPath="../../sandbox/chordGen",name="tests")
 
 
 

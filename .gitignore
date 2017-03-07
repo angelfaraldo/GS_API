@@ -11,13 +11,13 @@ dist/
 *.so
 *.dll
 *.iml
-**/doc/_build/*
-**/doc/gh-pages/*
+docs/_build/*
+docs/gh-pages/*
 DBStyle.json
 
 .idea/*
 python/.idea/*
-python/gsapi/.idea/*
+gsapi/.idea/*
 *.pyo
 
 examples/Bassmine/output/*
@@ -28,3 +28,4 @@ python/sandbox/midi/*
 htmlcov/
 coverage.xml
 .idea/
+gsapi/
