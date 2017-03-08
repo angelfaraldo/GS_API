@@ -1,12 +1,12 @@
-gsapi.GSStyles
-==============
+gsapi.styles
+============
 .. automodule:: gsapi.GSStyles
     :members:
     :undoc-members:
 
 
-gsapi.GSStyles.BaseStyle module
----------------------------------
+gsapi.styles.BaseStyle module
+-----------------------------
 
 .. automodule:: gsapi.GSStyles.BaseStyle
     :members:

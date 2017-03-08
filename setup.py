@@ -23,7 +23,7 @@ def checkLazySetupCommands():
 
     # remainder for pip maintainers
     # (once .pypirc edited)
-    # bump the gsapiFullVersion in gsapiFullVersion.py then: python setup.py sdist bdist_wheel upload
+    # bump the GSAPI_FULL_VERSION in GSAPI_FULL_VERSION.py then: python setup.py sdist bdist_wheel upload
 
     if len(sys.argv) == 1:
         for s in toAppend:
@@ -33,7 +33,7 @@ def checkLazySetupCommands():
 
 if __name__ == '__main__':
     import sys
-    from gsapi.version import *
+    from gsapi.gsconfig import getGsapiFullVersion
     print("gsapi value%s" % getGsapiFullVersion())
     checkLazySetupCommands()
 
@@ -55,7 +55,7 @@ setup(name='gsapi',
       # scripts=scripts,
       # cmdclass={'build_ext': build_ext},
       test_suite='nose.collector',
-      install_requires=[midiRequiredName],
+      install_requires=[midiRequiredName, 'numpy', 'sphinx_rtd_theme'],
       # dependency_links = ['https://github.com/vishnubob/python-midi.git@feature/python3#egg="midi"'],
       zip_safe=True)
       # classifiers=classifiers)

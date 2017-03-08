@@ -1,6 +1,5 @@
 from __future__ import absolute_import, division, print_function
 
-from .baseStyle import *
-from .markovStyle import MarkovStyle
-from .databaseStyle import DatabaseStyle
-
+from .base_style import BaseStyle
+from .database_style import DatabaseStyle
+from .markov_style import MarkovStyle

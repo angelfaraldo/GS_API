@@ -104,7 +104,7 @@ class DescriptorTests(GSTestBase):
                         return False
                     if index == 0:
                         root = defaultPitchNames.index(p[0])
-                    # print index,truth[index][0],defaultPitchNames.index(p[0])-root
+                    # print index,truth[index][0],pitchNames.index(p[0])-root
                     if truth[index][0] == (defaultPitchNames.index(p[0]) - root + 12) % 12:
                         if index < len(truth):
                             if checkProposition(root, prop, truth, index + 1):

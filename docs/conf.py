@@ -78,6 +78,7 @@ author = u'Martin Hermant, Ángel Faraldo, Pere Calopa'
 # The short X.Y version.
 import gsapi
 version = gsapi.getGSAPIShortVersion()
+
 # The full version, including alpha/beta/rc tags.
 release = gsapi.GSAPIFullVersion
 

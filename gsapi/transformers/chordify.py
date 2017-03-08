@@ -1,7 +1,7 @@
 from __future__ import absolute_import, division, print_function
 
-from .baseTransformer import *
-from ..patterns.event import Event
+from ..gspattern import Event
+from .base_transformer import *
 
 
 # LEGACY CLASS: could be replaced by Pattern.generateViewpoint("chords")

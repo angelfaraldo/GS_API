@@ -1,9 +1,11 @@
+#!/usr/bin/env python
+# encoding: utf-8
+
 from __future__ import absolute_import, division, print_function
 
-from .baseDescriptor import *
+from .base_descriptor import *
 from .density import Density
-from ..patterns.utils import *
-from ..utils.pitchSpelling import *
+from .. import gsdefs
 
 
 def intervalListToProfile(intervalList, length=12):
@@ -15,8 +17,10 @@ def intervalListToProfile(intervalList, length=12):
 
 
 class ChordTag(tuple):
-    """Helper to print chords tags nicely.
-    Chord tags are tuples (root, type), ex : ('C','maj')
+    """
+    Helper to print chords tags nicely.
+    Chord tags are tuples (root, type), ex : ('C','maj').
+
     """
 
     def __repr__(self):
@@ -24,7 +28,7 @@ class ChordTag(tuple):
 
 
 class Chord(BaseDescriptor):
-    allProfiles = {key: intervalListToProfile(value) for key, value in chordTypes.items()}
+    allProfiles = {key: intervalListToProfile(value) for key, value in gsdefs.chordTypes.items()}
 
     def __init__(self, forceMajMin=False, allowDuplicates=False):
         BaseDescriptor.__init__(self)
@@ -33,8 +37,11 @@ class Chord(BaseDescriptor):
         self.allowDuplicates = allowDuplicates
 
     def configure(self, paramDict):
-        """Configure current descriptor mapping dict to parameters."""
-        raise NotImplementedError("Should have implemented this")
+        """
+        Configure current descriptor mapping dict to parameters.
+
+        """
+        raise NotImplementedError("Not Implemented.")
 
     def getDescriptorForPattern(self, pattern):
         allPitches = pattern.getAllPitches()
@@ -61,14 +68,12 @@ class Chord(BaseDescriptor):
         profileToConsider = Chord.allProfiles
         if self.forceMajMin:
             profileToConsider = {'min': profileToConsider['min'], 'maj': profileToConsider['maj']}
-        bestScore = findBestScoreForProfiles(chromas,
-                                             profileToConsider,
-                                             penalityWeight=pattern.duration / 2.0,
+        bestScore = findBestScoreForProfiles(chromas, profileToConsider, penalityWeight=pattern.duration / 2.0,
                                              allowDuplicates=self.allowDuplicates)
         if self.allowDuplicates:
-            return [ChordTag((defaultPitchNames[x[0]], x[1])) for x in bestScore]
+            return [ChordTag((gsdefs.pitchNames[x[0]], x[1])) for x in bestScore]
         else:
-            return ChordTag((defaultPitchNames[bestScore[0]], bestScore[1]))
+            return ChordTag((gsdefs.pitchNames[bestScore[0]], bestScore[1]))
 
 
 def findBestScoreForProfiles(chromas, pitchProfileDict, penalityWeight, allowDuplicates=False):
@@ -121,6 +126,7 @@ def convolveWithPitchProfile(chromas, pitchProfile, penalityWeight):
         for chroma in range(convLen):
             idx = (chroma - i + convLen) % convLen
             conv += chromas[chroma] * pitchProfile[idx]
+
             # penalize if notes from pitch profile are missing
             if pitchProfile[idx] > 0 >= chromas[chroma]:
                 conv -= penalityWeight
