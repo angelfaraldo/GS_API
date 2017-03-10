@@ -4,7 +4,7 @@ from gsapi import *
 
 gsio.gsioLog.setLevel(level=logging.ERROR)
 
-myPattern = gsio.fromMidi("../corpora/harmony/I5-IV.mid", "pitchNames")
+myPattern = gsio.fromMidi("./corpora/harmony/I5-IV.mid", "pitchNames")
 start_event = myPattern.events[0].startTime
 first_chord = myPattern.getStartingEventsAtTime(start_event)
 
@@ -25,8 +25,8 @@ print(myPattern)
 
 chord = Chordify(myPattern)
 
-print(chord.outputPattern)
-print(type(chord.outputPattern))
+#print(chord.outputPattern)
+#print(type(chord.outputPattern))
 
 
 # chord_name = Chord()

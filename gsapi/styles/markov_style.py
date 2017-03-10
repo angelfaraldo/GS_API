@@ -2,7 +2,7 @@
 from __future__ import absolute_import, division, print_function
 
 from .base_style import BaseStyle
-from ..gspattern import PatternMarkov
+from ..gsmarkov import PatternMarkov
 
 import logging
 markovLog = logging.getLogger('gsapi.styles.markov_style')

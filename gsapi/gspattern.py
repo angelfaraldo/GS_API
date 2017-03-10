@@ -3,20 +3,15 @@
 
 from __future__ import absolute_import, division, print_function
 
-import logging
-import copy
-import math
 import collections
-import os
-import random
+import copy
+import logging
+import math
 
-from . import gsutil
-from . import gsdefs
-from .gsio import *
-
+from . import gsdefs, gsutil
 
 # logger for pattern related operations
-patternLog = logging.getLogger("gsapi.pattern")
+gspatternLog = logging.getLogger("gsapi.pattern")
 
 
 class Event(object):
@@ -55,10 +50,11 @@ class Event(object):
         if not tag:
             self.tag = ()
         elif isinstance(tag, list):
-            patternLog.error("tag cannot be a list, converting to tuple")
+            gspatternLog.error("tag cannot be a list, converting to tuple")
             self.tag = tuple(tag)
         elif not isinstance(tag, collections.Hashable):
-            patternLog.error("tag has to be hashable, trying conversion to tuple")
+            gspatternLog.error(
+                "tag has to be hashable, trying conversion to tuple")
             self.tag = (tag,)
         else:
             self.tag = tag
@@ -176,7 +172,8 @@ class Event(object):
             time: float
                 time to compare with
         """
-        return (time >= self.startTime) and (time < self.startTime + self.duration)
+        return (time >= self.startTime) and (
+        time < self.startTime + self.duration)
 
 
 class Pattern(object):
@@ -233,11 +230,12 @@ class Pattern(object):
         Each line represents an event formatted as '[tag] pitch velocity startTime duration'
 
         """
-        s = "Pattern %s: duration: %.2f,bpm: %.2f,time signature: %d/%d\n" % (self.name,
-                                                                              self.duration,
-                                                                              self.bpm,
-                                                                              self.timeSignature[0],
-                                                                              self.timeSignature[1])
+        s = "Pattern %s: duration: %.2f,bpm: %.2f,time signature: %d/%d\n" % (
+        self.name,
+        self.duration,
+        self.bpm,
+        self.timeSignature[0],
+        self.timeSignature[1])
         for e in self.events:
             s += str(e) + "\n"
         return s
@@ -254,8 +252,10 @@ class Pattern(object):
 
     def __eq__(self, other):
         if isinstance(other, Pattern):
-            return (self.events == other.events) and (self.duration == other.duration) and (
-                self.timeSignature == other.timeSignature) and (self.startTime == other.startTime)
+            return (self.events == other.events) and (
+            self.duration == other.duration) and (
+                       self.timeSignature == other.timeSignature) and (
+                   self.startTime == other.startTime)
         return NotImplemented
 
     def __ne__(self, other):
@@ -283,7 +283,7 @@ class Pattern(object):
 
             pattern.reorderEvents()
             if len(pattern) == 0:
-                patternLog.warning("try to apply legato on an empty voice")
+                gspatternLog.warning("try to apply legato on an empty voice")
 
                 return
             for idx in range(1, len(pattern)):
@@ -301,7 +301,8 @@ class Pattern(object):
                 voice = self.getPatternWithPitch(p)
                 _perVoiceLegato(voice)
         for t in self.getAllTags():
-            voice = self.getPatternWithTags(tagToLookFor=t, exactSearch=False, makeCopy=False)
+            voice = self.getPatternWithTags(tagToLookFor=t, exactSearch=False,
+                                            makeCopy=False)
             _perVoiceLegato(voice)
 
     def transpose(self, interval):
@@ -396,7 +397,8 @@ class Pattern(object):
             if e.hasOneOfTags(tuple(tags)):
                 self.removeEvent(e)
 
-    def quantize(self, stepSize, quantizeStartTime=True, quantizeDuration=True):
+    def quantize(self, stepSize, quantizeStartTime=True,
+                 quantizeDuration=True):
         """ Quantize events.
 
         Args:
@@ -407,14 +409,18 @@ class Pattern(object):
         beatDivision = 1.0 / stepSize
         if quantizeStartTime and quantizeDuration:
             for e in self.events:
-                e.startTime = int(e.startTime * beatDivision) * 1.0 / beatDivision
-                e.duration = int(e.duration * beatDivision) * 1.0 / beatDivision
+                e.startTime = int(
+                    e.startTime * beatDivision) * 1.0 / beatDivision
+                e.duration = int(
+                    e.duration * beatDivision) * 1.0 / beatDivision
         elif quantizeStartTime:
             for e in self.events:
-                e.startTime = int(e.startTime * beatDivision) * 1.0 / beatDivision
+                e.startTime = int(
+                    e.startTime * beatDivision) * 1.0 / beatDivision
         elif quantizeDuration:
             for e in self.events:
-                e.duration = int(e.duration * beatDivision) * 1.0 / beatDivision
+                e.duration = int(
+                    e.duration * beatDivision) * 1.0 / beatDivision
 
     def timeStretch(self, ratio):
         """Time-stretch a pattern.
@@ -442,7 +448,8 @@ class Pattern(object):
                 res += [e]
         return res
 
-    def getActiveEventsAtTime(self, time, tolerance=0):  # todo: either implement or remove tolerance
+    def getActiveEventsAtTime(self, time,
+                              tolerance=0):  # todo: either implement or remove tolerance
         """ Get all events currently active at a givent time.
 
         Args:
@@ -498,7 +505,8 @@ class Pattern(object):
         pitchs = list(set(pitchs))
         return pitchs
 
-    def getPatternWithTags(self, tagToLookFor, exactSearch=True, makeCopy=True):
+    def getPatternWithTags(self, tagToLookFor, exactSearch=True,
+                           makeCopy=True):
         """Returns a sub-pattern with the given tags.
 
         Args:
@@ -510,8 +518,10 @@ class Pattern(object):
         """
         if isinstance(tagToLookFor, list):
             if exactSearch:
-                patternLog.error("cannot search exactly with a list of elements")
-            boolFunction = lambda inTags: len(inTags) > 0 and inTags in tagToLookFor
+                gspatternLog.error(
+                    "cannot search exactly with a list of elements")
+            boolFunction = lambda inTags: len(
+                inTags) > 0 and inTags in tagToLookFor
         elif callable(tagToLookFor):
             boolFunction = tagToLookFor
         else:
@@ -519,7 +529,8 @@ class Pattern(object):
             if exactSearch:
                 boolFunction = lambda inTags: inTags == tagToLookFor
             else:
-                boolFunction = lambda inTags: (inTags == tagToLookFor) or (len(inTags) > 0 and tagToLookFor in inTags)
+                boolFunction = lambda inTags: (inTags == tagToLookFor) or (
+                len(inTags) > 0 and tagToLookFor in inTags)
 
         res = self.getACopyWithoutEvents()
         for e in self.events:
@@ -547,7 +558,8 @@ class Pattern(object):
 
         return res
 
-    def getPatternWithoutTags(self, tagToLookFor, exactSearch=False, makeCopy=True):
+    def getPatternWithoutTags(self, tagToLookFor, exactSearch=False,
+                              makeCopy=True):
         """Returns a sub-pattern without the given tags.
 
         Args:
@@ -561,8 +573,10 @@ class Pattern(object):
 
         if isinstance(tagToLookFor, list):
             if exactSearch:
-                patternLog.error("cannot search exactly with a list of elements")
-            boolFunction = lambda inTags: len(inTags) > 0 and inTags in tagToLookFor
+                gspatternLog.error(
+                    "cannot search exactly with a list of elements")
+            boolFunction = lambda inTags: len(
+                inTags) > 0 and inTags in tagToLookFor
         elif callable(tagToLookFor):
             boolFunction = tagToLookFor
         else:
@@ -570,7 +584,8 @@ class Pattern(object):
             if exactSearch:
                 boolFunction = lambda inTags: inTags == tagToLookFor
             else:
-                boolFunction = lambda inTags: (inTags == tagToLookFor) or (len(inTags) > 0 and tagToLookFor in inTags)
+                boolFunction = lambda inTags: (inTags == tagToLookFor) or (
+                len(inTags) > 0 and tagToLookFor in inTags)
 
         res = self.getACopyWithoutEvents()
         for e in self.events:
@@ -631,21 +646,25 @@ class Pattern(object):
                 else:
                     equals = (ee.tag == e.tag)
                 if equals:
-                    if (ee.startTime >= e.startTime) and (ee.startTime < e.startTime + e.duration):
+                    if (ee.startTime >= e.startTime) and (
+                        ee.startTime < e.startTime + e.duration):
                         found = True
                         if ee.startTime - e.startTime > 0:
                             e.duration = ee.startTime - e.startTime
                             newList += [e]
                             overLappedEv += [ee]
                         else:
-                            patternLog.info("strict overlapping of start times %s with %s" % (e, ee))
+                            gspatternLog.info(
+                                "strict overlapping of start times %s with %s" % (
+                                e, ee))
 
                 if ee.startTime > (e.startTime + e.duration):
                     break
             if not found:
                 newList += [e]
             else:
-                patternLog.info("remove overlapping %s with %s" % (e, overLappedEv))
+                gspatternLog.info(
+                    "remove overlapping %s with %s" % (e, overLappedEv))
             idx += 1
         self.events = newList
         # return self
@@ -663,16 +682,20 @@ class Pattern(object):
         res = []
         for e in self.events:
             equals = False
-            equals = event.allTagsAreEqualWith(e) if allTagsMustBeEquals else event.hasOneCommonTagWith(e)
+            equals = event.allTagsAreEqualWith(
+                e) if allTagsMustBeEquals else event.hasOneCommonTagWith(e)
             if equals:
                 res += [e]
 
-    def getFilledWithSilences(self, maxSilenceTime=0, perTag=False, silenceTag='silence'):
+    def getFilledWithSilences(self, maxSilenceTime=0, perTag=False,
+                              silenceTag='silence'):
         pattern = self.copy()
-        pattern.fillWithSilences(maxSilenceTime=maxSilenceTime, perTag=perTag, silenceTag=silenceTag)
+        pattern.fillWithSilences(maxSilenceTime=maxSilenceTime, perTag=perTag,
+                                 silenceTag=silenceTag)
         return pattern
 
-    def fillWithSilences(self, maxSilenceTime=0, perTag=False, silenceTag='silence', silencePitch=0):
+    def fillWithSilences(self, maxSilenceTime=0, perTag=False,
+                         silenceTag='silence', silencePitch=0):
         """Fill empty time intervals (i.e no event) with silence event.
 
         Args:
@@ -691,18 +714,26 @@ class Pattern(object):
                 if e.startTime > lastOff:
                     if maxSilenceTime > 0:
                         while e.startTime - lastOff > maxSilenceTime:
-                            newEvents += [Event(lastOff, maxSilenceTime, silencePitch, 0, silenceTag)]
+                            newEvents += [
+                                Event(lastOff, maxSilenceTime, silencePitch, 0,
+                                      silenceTag)]
                             lastOff += maxSilenceTime
-                    newEvents += [Event(lastOff, e.startTime - lastOff, silencePitch, 0, silenceTag)]
+                    newEvents += [
+                        Event(lastOff, e.startTime - lastOff, silencePitch, 0,
+                              silenceTag)]
                 newEvents += [e]
                 lastOff = max(lastOff, e.startTime + e.duration)
 
             if lastOff < pattern.duration:
                 if maxSilenceTime > 0:
                     while lastOff < pattern.duration - maxSilenceTime:
-                        newEvents += [Event(lastOff, maxSilenceTime, silencePitch, 0, silenceTag)]
+                        newEvents += [
+                            Event(lastOff, maxSilenceTime, silencePitch, 0,
+                                  silenceTag)]
                         lastOff += maxSilenceTime
-                newEvents += [Event(lastOff, pattern.duration - lastOff, silencePitch, 0, silenceTag)]
+                newEvents += [
+                    Event(lastOff, pattern.duration - lastOff, silencePitch, 0,
+                          silenceTag)]
             return newEvents
 
         if not perTag:
@@ -711,7 +742,9 @@ class Pattern(object):
             allEvents = []
             for t in self.getAllTags():
                 allEvents += _fillListWithSilence(
-                        self.getPatternWithTags(tagToLookFor=t, exactSearch=False, makeCopy=False), silenceTag,
+                        self.getPatternWithTags(tagToLookFor=t,
+                                                exactSearch=False,
+                                                makeCopy=False), silenceTag,
                         silencePitch)
             self.events = allEvents
 
@@ -762,9 +795,11 @@ class Pattern(object):
         self.setDurationFromLastEvent()
         res['name'] = self.name
         if self.originPattern: res['originPattern'] = self.originPattern.name
-        res['timeInfo'] = {'duration': self.duration, 'bpm': self.bpm, 'timeSignature': self.timeSignature}
+        res['timeInfo'] = {'duration':      self.duration, 'bpm': self.bpm,
+                           'timeSignature': self.timeSignature}
         res['eventList'] = []
-        res['viewpoints'] = {k: v.toJSONDict(useTagIndexing) for k, v in self.viewpoints.items()}
+        res['viewpoints'] = {k: v.toJSONDict(useTagIndexing) for k, v in
+                             self.viewpoints.items()}
         if useTagIndexing:
             allTags = self.getAllTags()
             res['eventTags'] = allTags
@@ -777,7 +812,8 @@ class Pattern(object):
                                       'duration': e.duration,
                                       'pitch':    e.pitch,
                                       'velocity': e.velocity,
-                                      'tagIdx':   findIdxforTags(e.tag, allTags)
+                                      'tagIdx':   findIdxforTags(e.tag,
+                                                                 allTags)
                                       }]
         else:
             for e in self.events:
@@ -812,7 +848,8 @@ class Pattern(object):
 
                 assert False, "no origin pattern found"
 
-            self.originPattern = findOriginPatternInParent(json['originPattern'])
+            self.originPattern = findOriginPatternInParent(
+                    json['originPattern'])
 
         hasIndexedTags = 'eventTags' in json.keys()
         if hasIndexedTags:
@@ -822,7 +859,8 @@ class Pattern(object):
                                       duration=e['duration'],
                                       pitch=e['pitch'],
                                       velocity=e['velocity'],
-                                      tag=tuple([tags[f] for f in e['tagsIdx']])
+                                      tag=tuple(
+                                              [tags[f] for f in e['tagsIdx']])
                                       )]
         else:
             for e in json['eventList']:
@@ -833,12 +871,14 @@ class Pattern(object):
                                       tag=e['tag']
                                       )]
 
-        self.viewpoints = {k: Pattern().fromJSONDict(v, parentPattern=self) for k, v in json['viewpoints'].items()}
+        self.viewpoints = {k: Pattern().fromJSONDict(v, parentPattern=self) for
+                           k, v in json['viewpoints'].items()}
         self.setDurationFromLastEvent()
 
         return self
 
-    def splitInEqualLengthPatterns(self, desiredLength, viewpointName=None, makeCopy=True, supressEmptyPattern=True):
+    def splitInEqualLengthPatterns(self, desiredLength, viewpointName=None,
+                                   makeCopy=True, supressEmptyPattern=True):
         """Splits a pattern in consecutive equal length cuts.
 
         Args:
@@ -857,7 +897,8 @@ class Pattern(object):
                 patterns[numPattern] = patternToSlice.getACopyWithoutEvents()
                 patterns[numPattern].startTime = p * desiredLength
                 patterns[numPattern].duration = desiredLength
-                patterns[numPattern].name = patternToSlice.name + "_" + numPattern
+                patterns[
+                    numPattern].name = patternToSlice.name + "_" + numPattern
             newEv = e if not makeCopy else e.copy()
 
             if newEv.startTime + newEv.duration > (p + 1) * desiredLength:
@@ -873,11 +914,13 @@ class Pattern(object):
 
         patterns = {}
 
-        patternToSlice = self.viewpoints[viewpointName] if viewpointName else self
+        patternToSlice = self.viewpoints[
+            viewpointName] if viewpointName else self
         for e in patternToSlice.events:
             _handleEvent(e, patterns, makeCopy)
         res = []
-        maxListLen = int(math.ceil(patternToSlice.duration * 1.0 / desiredLength))
+        maxListLen = int(
+            math.ceil(patternToSlice.duration * 1.0 / desiredLength))
         for p in range(maxListLen):
             pName = str(p)
             if pName in patterns:
@@ -922,7 +965,8 @@ class Pattern(object):
                     if lastTime < consideredEvent.startTime:  # group all identical startTimeEvents
                         pattern = originPattern.getACopyWithoutEvents()
                         pattern.startTime = consideredEvent.startTime
-                        pattern.events = originPattern.getActiveEventsAtTime(consideredEvent.startTime)
+                        pattern.events = originPattern.getActiveEventsAtTime(
+                            consideredEvent.startTime)
                         pattern.duration = 0
 
                         for se in pattern.events:
@@ -939,14 +983,15 @@ class Pattern(object):
             elif sliceType == "all":
                 patternsList = [originPattern]
             else:
-                patternLog.error("sliceType %s not valid" % (sliceType))
+                gspatternLog.error("sliceType %s not valid" % (sliceType))
                 assert False
 
             for subPattern in patternsList:
                 if subPattern:
                     viewpoint.events += [Event(duration=subPattern.duration,
                                                startTime=subPattern.startTime,
-                                               tag=descriptor.getDescriptorForPattern(subPattern),
+                                               tag=descriptor.getDescriptorForPattern(
+                                                   subPattern),
                                                originPattern=subPattern)]
 
             return viewpoint
@@ -979,7 +1024,8 @@ class Pattern(object):
             sustainASCII = '>'
             silenceASCII = '-'
             out = "["
-            p = self.getPatternWithTags(t, makeCopy=True)  # .alignOnGrid(blockSize);
+            p = self.getPatternWithTags(t,
+                                        makeCopy=True)  # .alignOnGrid(blockSize);
             # p.fillWithSilences(maxSilenceTime = blockSize)
             isSilence = __areSilenceEvts(p.getActiveEventsAtTime(0))
             inited = False
@@ -1010,418 +1056,6 @@ class Pattern(object):
 
             out += "]: " + t
             print(out)
-
-
-class Dataset(object):
-    """
-    Class that holds a list of patterns imported from a specific gpath in glob
-    style.
-
-    """
-    defaultMidiFolder = os.path.abspath(__file__ + "../examples/corpora/drums/")
-    defaultMidiGlob = "*.mid"
-
-    def __init__(self, midiFolder=defaultMidiFolder, midiGlob=defaultMidiGlob,
-                 midiMap=gsdefs.simpleDrumMap, checkForOverlapped=True):
-
-        self.midiFolder = midiFolder
-        self.setMidiGlob(midiGlob)
-        self.midiMap = midiMap
-        self.checkForOverlapped = checkForOverlapped
-        self.importMIDI()
-
-    def setMidiGlob(self, globPattern):
-
-        import glob
-        if '.mid' in globPattern[-4:]:
-            globPattern = globPattern[:-4]
-        self.midiGlob = globPattern + '.mid'
-        self.globPath = os.path.abspath(os.path.join(self.midiFolder, self.midiGlob))
-        self.files = glob.glob(self.globPath)
-        if len(self.files) == 0:
-            patternLog.error("no files found for path: " + self.globPath)
-        else:
-            self.idx = random.randint(0, len(self.files) - 1)
-
-    def getAllSliceOfDuration(self, desiredDuration, viewpointName=None, supressEmptyPattern=True):
-        res = []
-        for p in self.patterns:
-            res += p.splitInEqualLengthPatterns(viewpointName=viewpointName,
-                                                desiredLength=desiredDuration,
-                                                supressEmptyPattern=supressEmptyPattern)
-        return res
-
-    def generateViewpoint(self, name, descriptor=None, sliceType=None):
-        for p in self.patterns:
-            p.generateViewpoint(name=name, descriptor=descriptor, sliceType=sliceType)
-
-    def importMIDI(self, fileName=""):
-
-        if fileName:
-            self.setMidiGlob(fileName)
-
-        self.patterns = []
-
-        for p in self.files:
-            patternLog.info('using ' + p)
-            p = gsio.fromMidi(p, self.midiMap, tracksToGet=[], checkForOverlapped=self.checkForOverlapped)
-            self.patterns += [p]
-
-        return self.patterns
-
-    def __getitem__(self, index):
-        """Utility to access paterns as list member: GSDataset[idx] = GSDataset.patterns[idx]
-        """
-        return self.patterns[index]
-
-
-class PatternMarkov(object):
-    """
-    Computes a Markov chain from pattern.
-
-    Args:
-        order: order used for markov computation
-        numSteps: number of steps to consider (binarization of pattern)
-
-    Attributes:
-        order: order used for markov computation
-        numSteps: number of steps to consider (binarization of pattern)
-    """
-
-    def __init__(self, order=1, numSteps=32, loopDuration=4, ):
-        self.order = order
-        self.numSteps = numSteps
-        self.loopDuration = loopDuration
-        self.transitionTable = {}
-
-    def generateTransitionTableFromPatternList(self, patternClasses):
-        """Generate style based on list of Pattern
-        Args:
-            patternClasses:  list of GSPatterns
-        """
-        if not isinstance(patternClasses, list):
-            patternLog.error("PatternMarkov need a list")
-            return False
-        else:
-            self.originPatterns = patternClasses
-            self.buildTransitionTable()
-
-    def getMarkovConfig(self):
-        return "order(%i), loopLength(%f), numSteps(%i)" % (self.order, self.loopDuration, self.numSteps)
-
-    def buildTransitionTable(self):
-        """ builds transision table for the previously given list of Pattern
-        """
-        self.transitionTable = [{} for f in range(int(self.numSteps))]
-
-        self.binarizedPatterns = copy.deepcopy(self.originPatterns)
-        for p in self.binarizedPatterns:
-            self.formatPattern(p)
-            self.checkSilences(p)
-            if (self.numSteps != int(p.duration)):
-                patternLog.warning("PatternMarkov : quantization to numSteps failed, numSteps=" + str(
-                        self.numSteps) + " duration=" + str(p.duration) + " cfg : " + self.getMarkovConfig())
-            for step in range(self.numSteps):
-                l = [p.getStartingEventsAtTime(step)]
-                self.checkSilenceInList(l)
-                curEvent = self._buildTupleForEvents(l)[0]
-                combinationName = self._buildTupleForEvents(self.getLastEvents(p, step, self.order, 1));
-
-                curDic = self.transitionTable[int(step)]
-
-                if combinationName not in curDic:
-                    curDic[combinationName] = {}
-
-                if curEvent not in curDic[combinationName]:
-                    curDic[combinationName][curEvent] = 1
-                else:
-                    curDic[combinationName][curEvent] += 1
-
-        def _normalize():
-            for t in self.transitionTable:
-                for d in t:
-                    sum = 0
-                    for pe in t[d]:
-                        sum += t[d][pe]
-                    for pe in t[d]:
-                        t[d][pe] /= 1.0 * sum
-
-        _normalize()
-
-    def getStringTransitionTable(self, reduceTuples=True, jsonStyle=True):
-        import copy
-        stringTable = copy.deepcopy(self.transitionTable)
-
-        def _tupleToString(d):
-            if isinstance(d, dict):
-                for k, v in d.items():
-                    if isinstance(k, tuple):
-                        d[str(_tupleToString(k))] = d.pop(k)
-                    _tupleToString(v)
-            elif isinstance(d, list):
-                for v in d:
-                    _tupleToString(v)
-            elif isinstance(d, tuple):
-                newTuple = ()
-                for v in d:
-                    newTuple += (_tupleToString(v),)
-                if reduceTuples and len(newTuple) == 1:
-                    newTuple = newTuple[0]
-                d = newTuple
-            return d
-
-        for t in stringTable:
-            t = _tupleToString(stringTable)
-
-        if jsonStyle:
-            import json
-
-            for i in range(len(stringTable)):
-                stringTable[i] = json.dumps(stringTable[i], indent=1)
-
-        return stringTable
-
-    def __repr__(self):
-        res = "Markov Transition Table\n"
-        st = self.getStringTransitionTable(reduceTuples=True, jsonStyle=True)
-        i = 0
-        for t in st:
-            res += "step %d\n%s\n" % (i, t)
-            i += 1
-        return res
-
-    def generatePattern(self, seed=None):
-        """Generate a new pattern from current transitionTable.
-
-        Args:
-            seed: seed used for random initialisation of pattern (value of None generates a new one)
-        """
-        random.seed(seed)
-        potentialStartEvent = []
-
-        def _getAvailableAtStep(step):
-            res = []
-            if step < 0:
-                step += len(self.transitionTable)
-            for n in self.transitionTable[step]:
-                for t in self.transitionTable[step][n]:
-                    res += [t]
-            return res
-
-        def _isValidState(step, previousTags):
-            d = self.transitionTable[step]
-            # print(d)
-            # print(previousTags)
-            return previousTags in d
-
-        def _generateEventAtStep(step, previousTags):
-
-            if previousTags not in self.transitionTable[step]:
-                patternLog.error("wrong transition table, zero state for " + str(previousTags))
-                patternLog.error(str(self.transitionTable[step]))
-                return None
-            d = self.transitionTable[step][previousTags]
-            chosenIdx = 0
-            if len(d) > 1:
-                tSum = 0
-                bins = []
-                for x in d.values():
-                    tSum += x
-                    bins += [tSum]
-                r = random.random()
-                for i in range(1, len(bins)):
-                    if bins[i - 1] <= r and bins[i] > r:
-                        chosenIdx = i - 1
-                        break
-
-            return list(d.keys())[chosenIdx]
-
-        cIdx = self.order
-        startHypothesis = tuple()
-        maxNumtries = 30
-        while not _isValidState(cIdx, startHypothesis):
-            startHypothesis = tuple()
-            for n in range(self.order):
-                startHypothesis += (random.choice(_getAvailableAtStep(n)),)
-            maxNumtries -= 1
-            if maxNumtries == 0:
-                raise Exception("Can't find start hypothesis in markov")
-
-        events = list(startHypothesis)
-        i = self.order
-        maxNumtries = 10
-        maxTries = maxNumtries
-        while i < self.numSteps and maxTries > 0:
-            newPast = tuple(events[i - self.order:i])
-            newEv = _generateEventAtStep(i, newPast)
-            if newEv:
-                events += [newEv]
-                maxTries = maxNumtries
-                i += 1
-            else:
-                maxTries -= 1
-                if maxTries == 0:
-                    patternLog.error("not found combination %s at step %i \n transitions\n %s" % (
-                        ','.join(newPast), i, self.transitionTable[i]))
-                    raise Exception(" can't find combination in markov")
-                else:
-                    patternLog.warning("not found combination %s " % (','.join(newPast)))
-
-        pattern = Pattern()
-        idx = 0
-
-        stepSize = 1.0 * self.loopDuration / self.numSteps
-
-        for el in events:
-            for tagElem in el:
-                if tagElem != 'silence':
-                    pattern.events += [Event(idx * stepSize, stepSize, 100, 127, tag=tagElem)]
-
-            idx += 1
-        pattern.duration = self.loopDuration
-
-        return pattern
-
-    def checkSilences(self, p):
-        for i in range(int(p.duration)):
-            c = p.getStartingEventsAtTime(i)
-            if len(c) > 1 and ("silence" in c):
-                patternLog.error("wrong silence")
-
-    def checkSilenceInList(self, c):
-        if len(c) > 1 and ('silence' in c):
-            patternLog.error("wrong silence")
-
-    def _buildTupleForEvents(self, events):
-        """Build a tuple from list of lists of events:
-        If list is [[a1, a2], [b1, b2, b3]] (where an and bn are tags of listed events)
-        this function returns "a1/a2, b1/b2/b3"
-        """
-        res = tuple()
-        for evAtStep in events:
-            curL = list()
-            for e in evAtStep:
-                curL += [e.tag]
-
-            # set allow for having consistent ordering, and remove step-wise overlapping events
-            res += (tuple(set(curL)),)
-        return res
-
-    def formatPattern(self, p):
-        """Format pattern to have a grid aligned on markov steps size."""
-        # p.quantize(self.loopDuration*1.0/self.numSteps);
-        p.timeStretch(self.numSteps * 1.0 / self.loopDuration)
-
-        p.alignOnGrid(1)
-        p.removeOverlapped()
-        p.fillWithSilences(maxSilenceTime=1)
-
-    def getLastEvents(self, pattern, step, num, stepSize):
-        events = []
-        for i in reversed(range(1, num + 1)):
-            idx = step - i * stepSize
-            if idx < 0:
-                idx += pattern.duration
-            events += [pattern.getStartingEventsAtTime(idx)]
-        return events
-
-    def getInternalState(self):
-        """utility function to save current state
-        """
-        res = {"transitionTable": self.transitionTable, "order": self.order, "numSteps": self.numSteps,
-               "loopDuration":    self.loopDuration}
-        return res
-
-    def setInternalState(self, state):
-        """utility function to load current state
-        """
-        self.transitionTable = state["transitionTable"]
-        self.order = state["order"]
-        self.numSteps = state["numSteps"]
-        self.loopDuration = state["loopDuration"]
-
-    def isBuilt(self):
-        return self.transitionTable != {}
-
-    def getAllPossibleStates(self):
-        possibleStates = []
-        for d in self.transitionTable:
-            possibleStates += list(d.keys())
-            for v in d.values():
-                for state in v.keys():
-                    possibleStates += [state]
-        possibleStates = list(set(possibleStates))
-        return possibleStates
-
-    def getAllPossibleStatesAtStep(self, step):
-        return list(set(self.getPossibleInStatesAtStep(step) + self.getPossibleOutStatesAtStep(step)))
-
-    def getPossibleOutStatesAtStep(self, step):
-        if step < 0: step += len(self.transitionTable)
-        step %= len(self.transitionTable)
-        d = self.transitionTable[step]
-        possibleStates = []
-        for v in d.values():
-            for state in v.keys():
-                possibleStates += [state]
-        possibleStates = list(set(possibleStates))
-        return possibleStates
-
-    def getPossibleInStatesAtStep(self, step):
-        if step < 0: step += len(self.transitionTable)
-        step %= len(self.transitionTable)
-        d = self.transitionTable[step]
-        return list(d.keys())
-
-    def getMatrixAtStep(self, step, possibleStatesIn=None, possibleStatesOut=None, matrix=None):
-        if step < 0: step += len(self.transitionTable)
-        possibleStatesIn = possibleStatesIn or self.getPossibleInStatesAtStep(step)
-        possibleStatesOut = possibleStatesOut or self.getPossibleOutStatesAtStep(step)
-        sizeIn = len(possibleStatesIn)
-        sizeOut = len(possibleStatesOut)
-        matrix = matrix or [[0] * sizeOut for i in range(sizeIn)]
-        d = self.transitionTable[step]
-        for k, v in d.items():
-            colIdx = possibleStatesIn.index(k)
-            for evt, p in v.items():
-                rowIdx = possibleStatesOut.index(evt)
-                matrix[colIdx][rowIdx] += p
-
-        return matrix, possibleStatesIn, possibleStatesOut
-
-    def __plotMatrix(self, m, labelsIn, labelsOut):
-        import matplotlib.pyplot as plt
-        fig, ax = plt.subplots()  # figsize=(18, 2))
-        # shows zero values as black
-        cmap = plt.cm.OrRd
-        cmap.set_under(color='black')
-        cax = ax.matshow(m, interpolation='nearest', vmin=0.000001, cmap=cmap)
-        ax.set_xticks(range(len(labelsOut)))
-        ax.set_xticklabels(labelsOut, rotation='vertical')
-        ax.set_yticks(range(len(labelsIn)))
-        ax.set_yticklabels(labelsIn)
-        fig.colorbar(cax)
-        plt.show()
-
-    def plotMatrixAtStep(self, step):
-        if step < 0: step += len(self.transitionTable)
-        mat, labelsIn, labelsOut = self.getMatrixAtStep(step)  # ,possibleStates = allTags)
-        self.__plotMatrix(mat, labelsIn, labelsOut)
-
-    def plotGlobalMatrix(self):
-        numSteps = len(self.transitionTable)
-        possibleStatesIn = list(
-                set([item for step in range(numSteps) for item in self.getPossibleInStatesAtStep(step)]))
-        possibleStatesOut = list(
-                set([item for step in range(numSteps) for item in self.getPossibleOutStatesAtStep(step)]))
-        sizeIn = len(possibleStatesIn)
-        sizeOut = len(possibleStatesOut)
-
-        matrix = [[0] * sizeOut for i in range(sizeIn)]
-        for step in range(numSteps):
-            self.getMatrixAtStep(step, possibleStatesIn=possibleStatesIn, possibleStatesOut=possibleStatesOut,
-                                 matrix=matrix)
-        self.__plotMatrix(matrix, possibleStatesIn, possibleStatesOut)
 
 
 def patternToList(pattern):

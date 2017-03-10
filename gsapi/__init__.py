@@ -2,12 +2,11 @@
 
 # import logging
 
-from . import bassmine, gsconfig, gsdefs, gsio, gspattern, gsutil
+from . import bassmine, gsconfig, gsdefs, gsmarkov, gsio, gspattern, gsutil
 from .descriptors import *
 from .extractors import *
 from .styles import *
 from .transformers import *
-from gsconfig import *
 
 
 #if __name__ == '__main__':

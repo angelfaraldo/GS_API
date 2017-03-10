@@ -1,6 +1,6 @@
-from gsapi import gsio
+from gsapi import *
 
-crawledFolder = "../corpora/drums/*.mid"
+crawledFolder = "./corpora/drums/*.mid"
 
 customNoteMapping = {"spam": [(35, '*'), 45],
                      "Kick": 36,
@@ -21,11 +21,10 @@ customNoteMapping = {"spam": [(35, '*'), 45],
                      "CowBell": 51}
 
 
-desiredPatternLength = 16
+# desiredPatternLength = 16
 patterns = gsio.fromMidiCollection(crawledFolder,
                                    {"Kick": 36},
                                    TagsFromTrackNameEvents=False)
 
 print(patterns[0])
 print([x.startTime for x in patterns[0].events])
-
