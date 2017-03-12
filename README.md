@@ -1,4 +1,4 @@
-gsapi
+GS-API
 =====
 
 The GS-API is a Python/C++ library for manipulating musical symbolic data.
