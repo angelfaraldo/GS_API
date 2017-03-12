@@ -20,6 +20,9 @@ htmlcov/
 coverage.xml
 .idea/
 .DS_Store
-output/*
+output/*.
 gsapi/__pycache__/
-models/*
+output/*.json
+output/*.png
+output/*.csv
+output/mr_scruff/
