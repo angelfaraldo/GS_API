@@ -1,7 +1,7 @@
 gsapi
 =====
 
-The gsapi is a Python/C++ library for manipulating musical symbolic data.
+The GS-API is a Python/C++ library for manipulating musical symbolic data.
 
 ###Overview
 
