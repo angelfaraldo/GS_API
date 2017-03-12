@@ -19,7 +19,7 @@ install:
     - python python/setup.py install
 
 script:
-    - cd python && coverage run setup.py tests
+    - coverage run setup.py tests
 
 after_success:
   # - cd ..
