@@ -7,7 +7,6 @@ from setuptools import setup, find_packages
 
 # from distutils.extension import Extension
 
-
 # LEGACY IMPORTS
 # ==============
 # from Cython.Distutils import build_ext

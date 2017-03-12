@@ -28,7 +28,7 @@ class GSPatternTest(GSTestBase):
             self.assertTrue(p.duration > 0, 'cant import midi file %s: no duration' % p.name)
             self.assertTrue(p.events != [], 'cant import midi file %s: no events' % p.name)
             self.checkPatternValid(p, msg='import Pattern %s failed' % p.name)
-            sliced = p.getPatternForTimeSlice(0, 4)
+            sliced = p.getPatternFromTimeSlice(0, 4)
             self.checkPatternValid(sliced, msg='slicing pattern failed')
             ps = p.splitInEqualLengthPatterns(4, makeCopy=True)
             for p in ps:
@@ -50,7 +50,7 @@ class GSPatternTest(GSTestBase):
     def test_stretch(self):
         for bp in self.cachedDataset.patterns:
             originPattern = bp.copy()
-            p = bp.getPatternForTimeSlice(0, 4)
+            p = bp.getPatternFromTimeSlice(0, 4)
             p.timeStretch(32 / 4.0)
             p.alignOnGrid(1)
             # p.removeOverlapped()

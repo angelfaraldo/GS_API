@@ -213,7 +213,7 @@ class Event(object):
 
 class Pattern(object):
     """
-    Class representing a pattern (i.e. collection of events).
+    Class representing a Pattern (i.e. a collection of Events).
     Holds a list of events and provides basic manipulation functions.
 
     Parameters
@@ -221,8 +221,8 @@ class Pattern(object):
     duration: float
         length of pattern. Usually in beats, but time scale is up to
         the user (it can be useful if working on 32th note steps).
-    events: list
-        list of Event for this pattern.
+    events: list of Events
+        list of Events for this pattern.
     bpm: float
         initial tempo in beats per minute for this pattern (default: 120).
     timeSignature: list of ints [i,i]
@@ -233,14 +233,8 @@ class Pattern(object):
         dict of ViewPoints
 
     """
-    def __init__(self,
-                 duration=0,
-                 events=None,
-                 bpm=120,
-                 timeSignature=(4, 4),  # changed list to tuple.
-                 key="C",
-                 originFilePath="",
-                 name=""):
+    def __init__(self, duration=0, events=None, bpm=120, timeSignature=(4, 4),
+                 key="", originFilePath="", name=""):
         self.duration = duration
         if events:
             self.events = events
@@ -255,42 +249,24 @@ class Pattern(object):
         self.startTime = 0
         self.originPattern = None
 
-    def __repr__(self):
-        """
-        Print out the list of events.
-
-        Notes
-        -----
-        Each line represents an event formatted as '[tag] pitch velocity startTime duration'
-
-        """
-        s = "Pattern %s: duration: %.2f,bpm: %.2f,time signature: %d/%d\n" % (
-        self.name,
-        self.duration,
-        self.bpm,
-        self.timeSignature[0],
-        self.timeSignature[1])
-        for e in self.events:
-            s += str(e) + "\n"
-        return s
-
-    def __len__(self):
-        return len(self.events)
+    def __eq__(self, other):
+        if isinstance(other, Pattern):
+            return (self.events == other.events) and (
+                self.duration == other.duration) and (
+                       self.timeSignature == other.timeSignature) and (
+                       self.startTime == other.startTime)
+        return NotImplemented
 
     def __getitem__(self, index):
         """
-        Utility to access events as list member: Pattern[idx] = Pattern.events[idx]
+        Utility to access events as list member:
+        Pattern[idx] = Pattern.events[idx]
 
         """
         return self.events[index]
 
-    def __eq__(self, other):
-        if isinstance(other, Pattern):
-            return (self.events == other.events) and (
-            self.duration == other.duration) and (
-                       self.timeSignature == other.timeSignature) and (
-                   self.startTime == other.startTime)
-        return NotImplemented
+    def __len__(self):
+        return len(self.events)
 
     def __ne__(self, other):
         result = self.__eq__(other)
@@ -298,103 +274,28 @@ class Pattern(object):
             return result
         return not result
 
-    def __setitem__(self, index, item):
-        self.events[index] = item
-
-    def applyLegato(self, usePitchValues=False):
+    def __repr__(self):
         """
-        This function supress the possible silences in this pattern by
-        stretching consecutive identical events (tags or pitch numbers).
-
-        Parameters
-        ----------
-        usePitchValues: boolean
-            use pitch note numbers instead of tags (it is a bit faster).
-
-        """
-
-        def _perVoiceLegato(pattern):
-
-            pattern.reorderEvents()
-            if len(pattern) == 0:
-                gspatternLog.warning("try to apply legato on an empty voice")
-
-                return
-            for idx in range(1, len(pattern)):
-
-                diff = pattern[idx].startTime - pattern[idx - 1].getEndTime()
-                if diff > 0:
-                    pattern[idx - 1].duration += diff
-
-            diff = pattern.duration - pattern[-1].getEndTime()
-            if diff > 0:
-                pattern[-1].duration += diff
-
-        if usePitchValues:
-            for p in self.getAllPitches():
-                voice = self.getPatternWithPitch(p)
-                _perVoiceLegato(voice)
-        for t in self.getAllTags():
-            voice = self.getPatternWithTags(tagToLookFor=t, exactSearch=False,
-                                            makeCopy=False)
-            _perVoiceLegato(voice)
-
-    def transpose(self, interval):
-        """
-        Transposes a Pattern to the desired interval
-
-        Parameters
-        ----------
-        interval: int
-            transposition factor in semitones (positive or negative int)
-
-        """
-        for e in self.events:
-            e.pitch += interval
-            e.tag = [gsutil.pitch2name(e.pitch, gsdefs.pitchNames)]
-            # return self
-
-    def setDurationFromLastEvent(self, onlyIfBigger=True):
-        """Sets duration to last event NoteOff
-
-        Parameters
-        ----------
-        onlyIfBigger: bool
-            update duration only if last Note off is bigger
+        Print out the list of events.
 
         Notes
         -----
-        If inner events have a bigger time span than self.duration,
-        increase the duration to fit.
+        Each line represents an event formatted as
+        '[tag] pitch velocity startTime duration'
 
         """
-        total = self.getLastNoteOff()
-        if total and (total > self.duration or not onlyIfBigger):
-            self.duration = total
+        s = "Pattern %s: Duration: %.2f, BPM: %.2f, TimeSignature: %d/%d\n" % (
+            self.name,
+            self.duration,
+            self.bpm,
+            self.timeSignature[0],
+            self.timeSignature[1])
+        for e in self.events:
+            s += str(e) + "\n"
+        return s
 
-    def reorderEvents(self):
-        """
-        Ensure than our internal event list `events` is time sorted.
-        It can be useful for time sensitive events iteration.
-
-        """
-        self.events.sort(key=lambda x: x.startTime, reverse=False)
-
-    def getLastNoteOff(self):
-        """
-        Gets last event end time
-
-        Returns
-        -------
-        lastNoteOff: float
-             The time corresponding to the end of the last event.
-
-        """
-        if len(self.events):
-            self.reorderEvents()
-            return self.events[-1].duration + self.events[-1].startTime
-        else:
-            return None
+    def __setitem__(self, index, item):
+        self.events[index] = item
 
     def addEvent(self, event):
         """
@@ -405,236 +306,6 @@ class Pattern(object):
         """
         self.events += [event]
         self.setDurationFromLastEvent()
-
-    def removeEvent(self, event):
-        """remove given event
-        Args:
-            event: the Event to be added
-        """
-        idxToRemove = []
-        idx = 0
-        for e in self.events:
-            if event == e:
-                idxToRemove += [idx]
-            idx += 1
-
-        for i in idxToRemove:
-            del self.events[i]
-
-    def removeByTags(self, tags):
-        """Remove all event(s) in a pattern with specified tag(s).
-
-        Args:
-            tags: list of tag(s)
-        """
-        for e in self.events:
-            if e.hasOneOfTags(tuple(tags)):
-                self.removeEvent(e)
-
-    def quantize(self, stepSize, quantizeStartTime=True,
-                 quantizeDuration=True):
-        """ Quantize events.
-
-        Args:
-            stepSize: the duration that we want to quantize to
-            quantizeDuration: do we quantize duration?
-            quantizeStartTime: do we quantize startTimes
-        """
-        beatDivision = 1.0 / stepSize
-        if quantizeStartTime and quantizeDuration:
-            for e in self.events:
-                e.startTime = int(
-                    e.startTime * beatDivision) * 1.0 / beatDivision
-                e.duration = int(
-                    e.duration * beatDivision) * 1.0 / beatDivision
-        elif quantizeStartTime:
-            for e in self.events:
-                e.startTime = int(
-                    e.startTime * beatDivision) * 1.0 / beatDivision
-        elif quantizeDuration:
-            for e in self.events:
-                e.duration = int(
-                    e.duration * beatDivision) * 1.0 / beatDivision
-
-    def timeStretch(self, ratio):
-        """Time-stretch a pattern.
-
-        Args:
-            ratio: the ratio used for time stretching
-        """
-        for e in self.events:
-            e.startTime *= ratio
-            e.duration *= ratio
-        self.duration *= ratio
-
-    def getStartingEventsAtTime(self, time, tolerance=0):
-        """ Get all events activating at a given time.
-
-        Args:
-            time: time asked for
-            tolerance: allowed deviation of start time
-        Returns:
-            list of events
-        """
-        res = []
-        for e in self.events:
-            if (time - e.startTime >= 0 and time - e.startTime <= tolerance):
-                res += [e]
-        return res
-
-    def getActiveEventsAtTime(self, time,
-                              tolerance=0):  # todo: either implement or remove tolerance
-        """ Get all events currently active at a givent time.
-
-        Args:
-            time: time asked for
-            tolerance: admited deviation of start time
-        Returns:
-            list of events
-        """
-        res = []
-        for e in self.events:
-            if (time - e.startTime >= 0 and time - e.startTime < e.duration):
-                res += [e]
-        return res
-
-    def copy(self):
-        """Deepcopy a pattern
-        """
-        return copy.deepcopy(self)
-
-    def getACopyWithoutEvents(self):
-        """Copy all fields but events.
-            Useful for creating patterns from patterns.
-        """
-        p = Pattern()
-        p.duration = self.duration
-        p.bpm = self.bpm
-        p.timeSignature = self.timeSignature
-        p.originFilePath = self.originFilePath
-        p.name = self.name
-        return p
-
-    def getAllTags(self):
-        """ Returns all used tags in this pattern.
-
-        Returns:
-            set of tags composed of all possible tags
-        """
-        tagsList = []
-        for e in self.events:
-            tagsList += [e.tag]
-        tagsList = set(tagsList)
-        return tagsList
-
-    def getAllPitches(self):
-        """ Returns all used pitch in this pattern.
-
-        Returns:
-            list of integers composed of all pitches present in this pattern
-        """
-        pitchs = []
-        for e in self.events:
-            pitchs += [e.pitch]
-        pitchs = list(set(pitchs))
-        return pitchs
-
-    def getPatternWithTags(self, tagToLookFor, exactSearch=True,
-                           makeCopy=True):
-        """Returns a sub-pattern with the given tags.
-
-        Args:
-            tagToLookFor: tag,tags list or lambda  expression (return boolean based on tag input): tags to be checked for
-            exactSearch: bool: if True the tags argument can be an element of tag to look for, example : if we set tags='maj',an element with tag ('C','maj') will be valid
-            makeCopy: do we return a copy of original events (avoid modifying originating events when modifying the returned subpattern)
-        Returns:
-            a Pattern with only events that tags corresponds to given tagToLookFor
-        """
-        if isinstance(tagToLookFor, list):
-            if exactSearch:
-                gspatternLog.error(
-                    "cannot search exactly with a list of elements")
-            boolFunction = lambda inTags: len(
-                inTags) > 0 and inTags in tagToLookFor
-        elif callable(tagToLookFor):
-            boolFunction = tagToLookFor
-        else:
-            # tuple / string or any hashable object
-            if exactSearch:
-                boolFunction = lambda inTags: inTags == tagToLookFor
-            else:
-                boolFunction = lambda inTags: (inTags == tagToLookFor) or (
-                len(inTags) > 0 and tagToLookFor in inTags)
-
-        res = self.getACopyWithoutEvents()
-        for e in self.events:
-            found = boolFunction(e.tag)
-            if found:
-                newEv = e if not makeCopy else e.copy()
-                res.events += [newEv]
-        return res
-
-    def getPatternWithPitch(self, pitch, makeCopy=True):
-        """Returns a sub-pattern with the given pitch.
-
-        Args:
-            pitch: pitch to look for
-            makeCopy: do we return a copy of original events (avoid modifying originating events when modifying the returned subpattern)
-        Returns:
-            a Pattern with only events that pitch corresponds to given pitch
-        """
-        res = self.getACopyWithoutEvents()
-        for e in self.events:
-            found = (e.pitch == pitch)
-            if found:
-                newEv = e if not makeCopy else e.copy()
-                res.events += [newEv]
-
-        return res
-
-    def getPatternWithoutTags(self, tagToLookFor, exactSearch=False, makeCopy=True):
-        """
-        Returns a sub-pattern without the given tags.
-
-        Parameters
-        ----------
-        tagToLookFor: tag or tag list
-            tags to be checked for
-        exactSearch: bool
-            if True the tags have to be exactly the same as tagToLookFor,
-            else they can be included in events tag.
-        makeCopy: bool
-            do we return a copy of original events (avoid modifying originating
-             events when modifying the returned subpattern).
-
-        Returns
-        -------
-            A Pattern with events without specified tags.
-        """
-
-        if isinstance(tagToLookFor, list):
-            if exactSearch:
-                gspatternLog.error(
-                    "cannot search exactly with a list of elements")
-            boolFunction = lambda inTags: len(
-                inTags) > 0 and inTags in tagToLookFor
-        elif callable(tagToLookFor):
-            boolFunction = tagToLookFor
-        else:
-            # tuple / string or any hashable object
-            if exactSearch:
-                boolFunction = lambda inTags: inTags == tagToLookFor
-            else:
-                boolFunction = lambda inTags: (inTags == tagToLookFor) or (
-                len(inTags) > 0 and tagToLookFor in inTags)
-
-        res = self.getACopyWithoutEvents()
-        for e in self.events:
-            needToExclude = boolFunction(e.tag)
-            if not needToExclude:
-                newEv = e if not makeCopy else e.copy()
-                res.events += [newEv]
-        return res
 
     def alignOnGrid(self, stepSize, repeatibleTags=['silence']):
         """
@@ -676,81 +347,77 @@ class Pattern(object):
         self.removeOverlapped()
         return self
 
-    def removeOverlapped(self, usePitchValues=False):
+    def applyLegato(self, usePitchValues=True):
         """
-        Remove overlapped Events.
+        This function supresses the possible silences in this pattern by
+        stretching consecutive identical events (tags or pitch numbers).
 
         Parameters
         ----------
-        usePitchValues: bool
-            use pitch to discriminate events
+        usePitchValues: boolean
+            use pitch note numbers instead of tags (it is a bit faster).
 
         """
-        self.reorderEvents()
-        newList = []
-        idx = 0
+
+        def _perVoiceLegato(myPattern):
+            myPattern.reorderEvents()
+            if len(myPattern) == 0:
+                gspatternLog.warning("Trying to apply legato on an empty voice")
+                return
+            for idx in range(1, len(myPattern)):
+                diff = myPattern[idx].startTime - myPattern[idx - 1].getEndTime()
+                if diff > 0:
+                    myPattern[idx - 1].duration += diff
+            diff = myPattern.duration - myPattern[-1].getEndTime()
+            if diff > 0:
+                myPattern[-1].duration += diff
+        if usePitchValues:
+            for p in self.getAllPitches():
+                voice = self.getPatternWithPitch(p)
+                _perVoiceLegato(voice)
+        for t in self.getAllTags():
+            voice = self.getPatternWithTags(tagToLookFor=t, exactSearch=False, makeCopy=False)
+            _perVoiceLegato(voice)
+
+    def copy(self):
+        """
+        Deepcopy a pattern
+
+        """
+        return copy.deepcopy(self)
+
+    def copyWithoutEvents(self):
+        """
+        Copy all fields but events.
+        Useful for creating patterns from patterns.
+
+        Returns
+        -------
+        Pattern: a copy of the Pattern without events.
+
+        """
+        p = Pattern()
+        p.duration = self.duration
+        p.bpm = self.bpm
+        p.timeSignature = self.timeSignature
+        p.originFilePath = self.originFilePath
+        p.name = self.name
+        return p
+
+    def fillWithPreviousEvent(self):
+        """
+        Fill the gaps between onsets making longer
+        the duration of the previous event.
+        """
+
+        onsets = []
         for e in self.events:
-            found = False
-            overLappedEv = []
-            for i in range(idx + 1, len(self.events)):
-                ee = self.events[i]
-                if usePitchValues:
-                    equals = (ee.pitch == e.pitch)
-                else:
-                    equals = (ee.tag == e.tag)
-                if equals:
-                    if (ee.startTime >= e.startTime) and (
-                        ee.startTime < e.startTime + e.duration):
-                        found = True
-                        if ee.startTime - e.startTime > 0:
-                            e.duration = ee.startTime - e.startTime
-                            newList += [e]
-                            overLappedEv += [ee]
-                        else:
-                            gspatternLog.info(
-                                "strict overlapping of start times %s with %s" % (
-                                e, ee))
+            if e.startTime not in onsets:
+                onsets.append(e.startTime)
+        onsets.append(self.duration)
 
-                if ee.startTime > (e.startTime + e.duration):
-                    break
-            if not found:
-                newList += [e]
-            else:
-                gspatternLog.info(
-                    "remove overlapping %s with %s" % (e, overLappedEv))
-            idx += 1
-        self.events = newList
-        # return self
-
-    def getAllIdenticalEvents(self, event, allTagsMustBeEquals=True):
-        """
-        Get a list of events with the same tag or tags.
-
-        Parameters
-        __________
-        event: Event
-            event to compare with
-        allTagsMustBeEquals: bool
-            if set to True, events are considered identical when all tags
-            coincide. It set to False, one common tag will produce output.
-
-        Returns:
-            list of events that have all or one tags in common
-        """
-        res = []
         for e in self.events:
-            equals = False
-            equals = event.allTagsAreEqualWith(
-                e) if allTagsMustBeEquals else event.hasOneCommonTagWith(e)
-            if equals:
-                res += [e]
-
-    def getFilledWithSilences(self, maxSilenceTime=0, perTag=False,
-                              silenceTag='silence'):
-        pattern = self.copy()
-        pattern.fillWithSilences(maxSilenceTime=maxSilenceTime, perTag=perTag,
-                                 silenceTag=silenceTag)
-        return pattern
+            e.duration = onsets[onsets.index(e.startTime) + 1] - e.startTime
 
     def fillWithSilences(self, maxSilenceTime=0, perTag=False,
                          silenceTag='silence', silencePitch=0):
@@ -772,34 +439,34 @@ class Pattern(object):
         """
         self.reorderEvents()
 
-        def _fillListWithSilence(pattern, silenceTag, silencePitch=-1):
+        def _fillListWithSilence(myPattern, silTag, silPitch=0):
             lastOff = 0
             newEvents = []
 
-            for e in pattern.events:
+            for e in myPattern.events:
                 if e.startTime > lastOff:
                     if maxSilenceTime > 0:
                         while e.startTime - lastOff > maxSilenceTime:
                             newEvents += [
-                                Event(lastOff, maxSilenceTime, silencePitch, 0,
-                                      silenceTag)]
+                                Event(lastOff, maxSilenceTime, silPitch, 0,
+                                      silTag)]
                             lastOff += maxSilenceTime
                     newEvents += [
-                        Event(lastOff, e.startTime - lastOff, silencePitch, 0,
-                              silenceTag)]
+                        Event(lastOff, e.startTime - lastOff, silPitch, 0,
+                              silTag)]
                 newEvents += [e]
                 lastOff = max(lastOff, e.startTime + e.duration)
 
-            if lastOff < pattern.duration:
+            if lastOff < myPattern.duration:
                 if maxSilenceTime > 0:
-                    while lastOff < pattern.duration - maxSilenceTime:
+                    while lastOff < myPattern.duration - maxSilenceTime:
                         newEvents += [
-                            Event(lastOff, maxSilenceTime, silencePitch, 0,
-                                  silenceTag)]
+                            Event(lastOff, maxSilenceTime, silPitch, 0,
+                                  silTag)]
                         lastOff += maxSilenceTime
                 newEvents += [
-                    Event(lastOff, pattern.duration - lastOff, silencePitch, 0,
-                          silenceTag)]
+                    Event(lastOff, myPattern.duration - lastOff, silPitch, 0,
+                          silTag)]
             return newEvents
 
         if not perTag:
@@ -808,105 +475,11 @@ class Pattern(object):
             allEvents = []
             for t in self.getAllTags():
                 allEvents += _fillListWithSilence(
-                        self.getPatternWithTags(tagToLookFor=t,
-                                                exactSearch=False,
-                                                makeCopy=False), silenceTag,
-                        silencePitch)
+                    self.getPatternWithTags(tagToLookFor=t,
+                                            exactSearch=False,
+                                            makeCopy=False),
+                    silenceTag, silencePitch)
             self.events = allEvents
-
-    def fillWithPreviousEvent(self):
-        """
-        Fill the gaps between onsets making longer
-        the duration of the previous event.
-        """
-
-        onsets = []
-        for e in self.events:
-            if e.startTime not in onsets:
-                onsets.append(e.startTime)
-        onsets.append(self.duration)
-
-        for e in self.events:
-            e.duration = onsets[onsets.index(e.startTime) + 1] - e.startTime
-
-    def getPatternForTimeSlice(self, startTime, length, trimEnd=True):
-        """
-        Returns a pattern within the given timeslice.
-
-        Parameters
-        ----------
-        startTime: float
-            start time for time slice
-        length: float
-            length of time slice
-        trimEnd: bool
-            cut any events ending after startTime + length.
-
-        Returns
-        -------
-            new Pattern within the given time slice.
-
-        """
-        p = self.getACopyWithoutEvents()
-        p.startTime = startTime
-        p.duration = length
-        for e in self.events:
-            if 0 <= (e.startTime - startTime) < length:
-                newEv = e.copy()
-                newEv.startTime -= startTime
-                p.events += [newEv]
-        if trimEnd:
-            for e in p.events:
-                toCrop = e.startTime + e.duration - length
-                if toCrop > 0:
-                    e.duration -= toCrop
-        return p
-
-    def toJSONDict(self, useTagIndexing=True):
-        """
-        Gives a standard dict for json output.
-
-        Parameters
-        ----------
-        useTagIndexing: bool
-            if True, tags are stored as indexes from a list of all tags
-            This reduces the size of the JSON file.
-
-        """
-        res = {}
-        self.setDurationFromLastEvent()
-        res['name'] = self.name
-        if self.originPattern: res['originPattern'] = self.originPattern.name
-        res['timeInfo'] = {'duration':      self.duration, 'bpm': self.bpm,
-                           'timeSignature': self.timeSignature}
-        res['eventList'] = []
-        res['viewpoints'] = {k: v.toJSONDict(useTagIndexing) for k, v in
-                             self.viewpoints.items()}
-        if useTagIndexing:
-            allTags = self.getAllTags()
-            res['eventTags'] = allTags
-
-            def findIdxforTags(tags, allTags):
-                return [allTags.index(x) for x in tags]
-
-            for e in self.events:
-                res['eventList'] += [{'on':       e.startTime,
-                                      'duration': e.duration,
-                                      'pitch':    e.pitch,
-                                      'velocity': e.velocity,
-                                      'tagIdx':   findIdxforTags(e.tag,
-                                                                 allTags)
-                                      }]
-        else:
-            for e in self.events:
-                res['eventList'] += [{'on':       e.startTime,
-                                      'duration': e.duration,
-                                      'pitch':    e.pitch,
-                                      'velocity': e.velocity,
-                                      'tag':      e.tag
-                                      }]
-
-        return res
 
     def fromJSONDict(self, json, parentPattern=None):
         """
@@ -963,6 +536,484 @@ class Pattern(object):
 
         return self
 
+    def generateViewpoint(self, name, descriptor=None, sliceType=None):
+        """
+        generate viewpoints in this Pattern
+        Args:
+            name: name of the viewpoint generated , if name is one of ["chords",] it will generate the default descriptor
+            descriptor : if given it's the descriptor used
+            sliceType: type of slicing to compute viewPoint:
+                if integer its duration based see:splitInEqualLengthPatterns
+                if "perEvent" generates new pattern every new events startTime,
+                if "all" get the whole pattern (generate one and only viewPoint value)
+        """
+
+        def _computeViewpoint(originPattern, descriptor, name, sliceType=1):
+            """
+            Internal function for computing viewPoint
+
+            """
+            viewpoint = originPattern.copyWithoutEvents()
+            viewpoint.name = name
+            viewpoint.originPattern = originPattern
+
+            if isinstance(sliceType, int):
+                step = sliceType
+                patternsList = originPattern.splitInEqualLengthPatterns(step)
+
+            elif sliceType == "perEvent":
+                originPattern.reorderEvents()
+                lastTime = -1
+                patternsList = []
+                for consideredEvent in originPattern:
+                    if lastTime < consideredEvent.startTime:  # group all identical startTimeEvents
+                        pattern = originPattern.copyWithoutEvents()
+                        pattern.startTime = consideredEvent.startTime
+                        pattern.events = originPattern.getActiveEventsAtTime(
+                                consideredEvent.startTime)
+                        pattern.duration = 0
+
+                        for se in pattern.events:
+                            # TODO do we need to trim to beginning?
+                            # some events can have negative startTimes and each GSpattern.duration corresponds to difference between consideredEvent.startTime and lastEvent.startTime (if some events were existing before start of consideredEvent)
+                            #     se.startTime-=consideredEvent.startTime
+                            eT = se.getEndTime() - pattern.startTime
+                            if eT > pattern.duration:
+                                pattern.duration = eT
+                        lastTime = consideredEvent.startTime
+
+                        patternsList += [pattern]
+
+            elif sliceType == "all":
+                patternsList = [originPattern]
+            else:
+                gspatternLog.error("sliceType %s not valid" % (sliceType))
+                assert False
+
+            for subPattern in patternsList:
+                if subPattern:
+                    viewpoint.events += [Event(duration=subPattern.duration,
+                                               startTime=subPattern.startTime,
+                                               tag=descriptor.getDescriptorForPattern(
+                                                       subPattern),
+                                               originPattern=subPattern)]
+
+            return viewpoint
+
+        if descriptor:
+            self.viewpoints[name] = _computeViewpoint(originPattern=self,
+                                                      descriptor=descriptor,
+                                                      sliceType=sliceType,
+                                                      name=name)
+        else:
+            if name == "chords":
+                from .descriptors.chord import Chord
+                self.viewpoints[name] = _computeViewpoint(originPattern=self,
+                                                          descriptor=Chord(),
+                                                          sliceType=4,
+                                                          name=name)
+        # can use it as a return value
+        return self.viewpoints[name]
+
+    def getActiveEventsAtTime(self, time, tolerance=0):  # todo: implement tolerance
+        """
+        Get all events currently active at a givent time.
+
+        Args:
+            time: time asked for
+            tolerance: admited deviation of start time
+        Returns:
+            list of events
+        """
+        res = []
+        for e in self.events:
+            if 0 <= time - e.startTime < e.duration:
+                res += [e]
+        return res
+
+    def getIdenticalEvents(self, event, allTagsMustBeEquals=True):
+        """
+        Get a list of events with the same tag or tags.
+
+        Parameters
+        __________
+        event: Event
+            event to compare with
+        allTagsMustBeEquals: bool
+            if set to True, events are considered identical when all tags
+            coincide. It set to False, one common tag will produce output.
+
+        Returns:
+            list of events that have all or one tags in common
+        """
+        res = []
+        for e in self.events:
+            equals = False
+            equals = event.allTagsAreEqualWith(
+                    e) if allTagsMustBeEquals else event.hasOneCommonTagWith(e)
+            if equals:
+                res += [e]
+
+    def getFilledWithSilences(self, maxSilenceTime=0, perTag=False, silenceTag='silence'):
+        pattern = self.copy()
+        pattern.fillWithSilences(maxSilenceTime=maxSilenceTime, perTag=perTag,
+                                 silenceTag=silenceTag)
+        return pattern
+
+    def getLastNoteOff(self):
+        """
+        Gets last event end time
+
+        Returns
+        -------
+        lastNoteOff: float
+             The time corresponding to the end of the last event.
+
+        """
+        if len(self.events):
+            self.reorderEvents()
+            return self.events[-1].duration + self.events[-1].startTime
+        else:
+            return None
+
+    def getPatternFromTimeSlice(self, startTime, length, trimEnd=True):
+        """
+        Returns a pattern within the given timeslice.
+
+        Parameters
+        ----------
+        startTime: float
+            start time for time slice
+        length: float
+            length of time slice
+        trimEnd: bool
+            cut any events ending after startTime + length.
+
+        Returns
+        -------
+            new Pattern within the given time slice.
+
+        """
+        p = self.copyWithoutEvents()
+        p.startTime = startTime
+        p.duration = length
+        for e in self.events:
+            if 0 <= (e.startTime - startTime) < length:
+                newEv = e.copy()
+                newEv.startTime -= startTime
+                p.events += [newEv]
+        if trimEnd:
+            for e in p.events:
+                toCrop = e.startTime + e.duration - length
+                if toCrop > 0:
+                    e.duration -= toCrop
+        return p
+
+    def getStartingEventsAtTime(self, time, tolerance=0):
+        """ Get all events activating at a given time.
+
+        Args:
+            time: time asked for
+            tolerance: allowed deviation of start time
+        Returns:
+            list of events
+        """
+        res = []
+        for e in self.events:
+            if (time - e.startTime >= 0 and time - e.startTime <= tolerance):
+                res += [e]
+        return res
+
+    def getAllTags(self):
+        """ Returns all used tags in this pattern.
+
+        Returns:
+            set of tags composed of all possible tags
+
+        """
+        tagsList = []
+        for e in self.events:
+            tagsList += [e.tag]
+        tagsList = set(tagsList)
+        return tagsList
+
+    def getAllPitches(self):
+        """ Returns all used pitch in this pattern.
+
+        Returns:
+            list of integers composed of all pitches present in this pattern
+        """
+        pitchs = []
+        for e in self.events:
+            pitchs += [e.pitch]
+        pitchs = list(set(pitchs))
+        return pitchs
+
+    def getPatternWithTags(self, tagToLookFor, exactSearch=True,
+                           makeCopy=True):
+        """Returns a sub-pattern with the given tags.
+
+        Args:
+            tagToLookFor: tag,tags list or lambda  expression (return boolean based on tag input): tags to be checked for
+            exactSearch: bool: if True the tags argument can be an element of tag to look for, example : if we set tags='maj',an element with tag ('C','maj') will be valid
+            makeCopy: do we return a copy of original events (avoid modifying originating events when modifying the returned subpattern)
+        Returns:
+            a Pattern with only events that tags corresponds to given tagToLookFor
+        """
+        if isinstance(tagToLookFor, list):
+            if exactSearch:
+                gspatternLog.error(
+                    "cannot search exactly with a list of elements")
+            boolFunction = lambda inTags: len(
+                inTags) > 0 and inTags in tagToLookFor
+        elif callable(tagToLookFor):
+            boolFunction = tagToLookFor
+        else:
+            # tuple / string or any hashable object
+            if exactSearch:
+                boolFunction = lambda inTags: inTags == tagToLookFor
+            else:
+                boolFunction = lambda inTags: (inTags == tagToLookFor) or (
+                len(inTags) > 0 and tagToLookFor in inTags)
+
+        res = self.copyWithoutEvents()
+        for e in self.events:
+            found = boolFunction(e.tag)
+            if found:
+                newEv = e if not makeCopy else e.copy()
+                res.events += [newEv]
+        return res
+
+    def getPatternWithPitch(self, pitch, makeCopy=True):
+        """Returns a sub-pattern with the given pitch.
+
+        Args:
+            pitch: pitch to look for
+            makeCopy: do we return a copy of original events (avoid modifying originating events when modifying the returned subpattern)
+        Returns:
+            a Pattern with only events that pitch corresponds to given pitch
+        """
+        res = self.copyWithoutEvents()
+        for e in self.events:
+            found = (e.pitch == pitch)
+            if found:
+                newEv = e if not makeCopy else e.copy()
+                res.events += [newEv]
+
+        return res
+
+    def getPatternWithoutTags(self, tagToLookFor, exactSearch=False, makeCopy=True):
+        """
+        Returns a sub-pattern without the given tags.
+
+        Parameters
+        ----------
+        tagToLookFor: tag or tag list
+            tags to be checked for
+        exactSearch: bool
+            if True the tags have to be exactly the same as tagToLookFor,
+            else they can be included in events tag.
+        makeCopy: bool
+            do we return a copy of original events (avoid modifying originating
+             events when modifying the returned subpattern).
+
+        Returns
+        -------
+            A Pattern with events without specified tags.
+        """
+
+        if isinstance(tagToLookFor, list):
+            if exactSearch:
+                gspatternLog.error(
+                    "cannot search exactly with a list of elements")
+            boolFunction = lambda inTags: len(
+                inTags) > 0 and inTags in tagToLookFor
+        elif callable(tagToLookFor):
+            boolFunction = tagToLookFor
+        else:
+            # tuple / string or any hashable object
+            if exactSearch:
+                boolFunction = lambda inTags: inTags == tagToLookFor
+            else:
+                boolFunction = lambda inTags: (inTags == tagToLookFor) or (
+                len(inTags) > 0 and tagToLookFor in inTags)
+
+        res = self.copyWithoutEvents()
+        for e in self.events:
+            needToExclude = boolFunction(e.tag)
+            if not needToExclude:
+                newEv = e if not makeCopy else e.copy()
+                res.events += [newEv]
+        return res
+
+    def quantize(self, stepSize, quantizeStartTime=True,
+                 quantizeDuration=True):
+        """ Quantize events.
+
+        Args:
+            stepSize: the duration that we want to quantize to
+            quantizeDuration: do we quantize duration?
+            quantizeStartTime: do we quantize startTimes
+        """
+        beatDivision = 1.0 / stepSize
+        if quantizeStartTime and quantizeDuration:
+            for e in self.events:
+                e.startTime = int(
+                        e.startTime * beatDivision) * 1.0 / beatDivision
+                e.duration = int(
+                        e.duration * beatDivision) * 1.0 / beatDivision
+        elif quantizeStartTime:
+            for e in self.events:
+                e.startTime = int(
+                        e.startTime * beatDivision) * 1.0 / beatDivision
+        elif quantizeDuration:
+            for e in self.events:
+                e.duration = int(
+                        e.duration * beatDivision) * 1.0 / beatDivision
+
+    def removeByTags(self, tags):
+        """Remove all event(s) in a pattern with specified tag(s).
+
+        Args:
+            tags: list of tag(s)
+        """
+        for e in self.events:
+            if e.hasOneOfTags(tuple(tags)):
+                self.removeEvent(e)
+
+    def removeEvent(self, event):
+        """remove given event
+        Args:
+            event: the Event to be added
+        """
+        idxToRemove = []
+        idx = 0
+        for e in self.events:
+            if event == e:
+                idxToRemove += [idx]
+            idx += 1
+
+        for i in idxToRemove:
+            del self.events[i]
+
+    def removeOverlapped(self, usePitchValues=False):
+        """
+        Remove overlapped Events.
+
+        Parameters
+        ----------
+        usePitchValues: bool
+            use pitch to discriminate events
+
+        """
+        self.reorderEvents()
+        newList = []
+        idx = 0
+        for e in self.events:
+            found = False
+            overLappedEv = []
+            for i in range(idx + 1, len(self.events)):
+                ee = self.events[i]
+                if usePitchValues:
+                    equals = (ee.pitch == e.pitch)
+                else:
+                    equals = (ee.tag == e.tag)
+                if equals:
+                    if (ee.startTime >= e.startTime) and (
+                        ee.startTime < e.startTime + e.duration):
+                        found = True
+                        if ee.startTime - e.startTime > 0:
+                            e.duration = ee.startTime - e.startTime
+                            newList += [e]
+                            overLappedEv += [ee]
+                        else:
+                            gspatternLog.info(
+                                "strict overlapping of start times %s with %s" % (
+                                e, ee))
+
+                if ee.startTime > (e.startTime + e.duration):
+                    break
+            if not found:
+                newList += [e]
+            else:
+                gspatternLog.info(
+                    "remove overlapping %s with %s" % (e, overLappedEv))
+            idx += 1
+        self.events = newList
+        # return self
+
+    def reorderEvents(self):
+        """
+        Ensure than our internal event list `events` is time sorted.
+        It can be useful for time sensitive events iteration.
+
+        """
+        self.events.sort(key=lambda x: x.startTime, reverse=False)
+
+    def toJSONDict(self, useTagIndexing=True):
+        """
+        Gives a standard dict for json output.
+
+        Parameters
+        ----------
+        useTagIndexing: bool
+            if True, tags are stored as indexes from a list of all tags
+            This reduces the size of the JSON file.
+
+        """
+        res = {}
+        self.setDurationFromLastEvent()
+        res['name'] = self.name
+        if self.originPattern: res['originPattern'] = self.originPattern.name
+        res['timeInfo'] = {'duration':      self.duration, 'bpm': self.bpm,
+                           'timeSignature': self.timeSignature}
+        res['eventList'] = []
+        res['viewpoints'] = {k: v.toJSONDict(useTagIndexing) for k, v in
+                             self.viewpoints.items()}
+        if useTagIndexing:
+            allTags = self.getAllTags()
+            res['eventTags'] = allTags
+
+            def findIdxforTags(tags, allTags):
+                return [allTags.index(x) for x in tags]
+
+            for e in self.events:
+                res['eventList'] += [{'on':       e.startTime,
+                                      'duration': e.duration,
+                                      'pitch':    e.pitch,
+                                      'velocity': e.velocity,
+                                      'tagIdx':   findIdxforTags(e.tag,
+                                                                 allTags)
+                                      }]
+        else:
+            for e in self.events:
+                res['eventList'] += [{'on':       e.startTime,
+                                      'duration': e.duration,
+                                      'pitch':    e.pitch,
+                                      'velocity': e.velocity,
+                                      'tag':      e.tag
+                                      }]
+
+        return res
+
+    def setDurationFromLastEvent(self, onlyIfBigger=True):
+        """Sets duration to last event NoteOff
+
+        Parameters
+        ----------
+        onlyIfBigger: bool
+            update duration only if last Note off is bigger
+
+        Notes
+        -----
+        If inner events have a bigger time span than self.duration,
+        increase the duration to fit.
+
+        """
+        total = self.getLastNoteOff()
+        if total and (total > self.duration or not onlyIfBigger):
+            self.duration = total
+
     def splitInEqualLengthPatterns(self, desiredLength, viewpointName=None,
                                    makeCopy=True, supressEmptyPattern=True):
         """Splits a pattern in consecutive equal length cuts.
@@ -980,7 +1031,7 @@ class Pattern(object):
             p = int(math.floor(e.startTime * 1.0 / desiredLength))
             numPattern = str(p)
             if numPattern not in patterns:
-                patterns[numPattern] = patternToSlice.getACopyWithoutEvents()
+                patterns[numPattern] = patternToSlice.copyWithoutEvents()
                 patterns[numPattern].startTime = p * desiredLength
                 patterns[numPattern].duration = desiredLength
                 patterns[
@@ -1018,86 +1069,8 @@ class Pattern(object):
                 res += [curPattern]
         return res
 
-    def generateViewpoint(self, name, descriptor=None, sliceType=None):
-        """
-        generate viewpoints in this Pattern
-        Args:
-            name: name of the viewpoint generated , if name is one of ["chords",] it will generate the default descriptor
-            descriptor : if given it's the descriptor used
-            sliceType: type of slicing to compute viewPoint:
-                if integer its duration based see:splitInEqualLengthPatterns
-                if "perEvent" generates new pattern every new events startTime,
-                if "all" get the whole pattern (generate one and only viewPoint value)
-        """
-
-        def _computeViewpoint(originPattern, descriptor, name, sliceType=1):
-            """
-            Internal function for computing viewPoint
-
-            """
-            viewpoint = originPattern.getACopyWithoutEvents()
-            viewpoint.name = name
-            viewpoint.originPattern = originPattern
-
-            if isinstance(sliceType, int):
-                step = sliceType
-                patternsList = originPattern.splitInEqualLengthPatterns(step)
-
-            elif sliceType == "perEvent":
-                originPattern.reorderEvents()
-                lastTime = -1
-                patternsList = []
-                for consideredEvent in originPattern:
-                    if lastTime < consideredEvent.startTime:  # group all identical startTimeEvents
-                        pattern = originPattern.getACopyWithoutEvents()
-                        pattern.startTime = consideredEvent.startTime
-                        pattern.events = originPattern.getActiveEventsAtTime(
-                            consideredEvent.startTime)
-                        pattern.duration = 0
-
-                        for se in pattern.events:
-                            # TODO do we need to trim to beginning?
-                            # some events can have negative startTimes and each GSpattern.duration corresponds to difference between consideredEvent.startTime and lastEvent.startTime (if some events were existing before start of consideredEvent)
-                            #     se.startTime-=consideredEvent.startTime
-                            eT = se.getEndTime() - pattern.startTime
-                            if eT > pattern.duration:
-                                pattern.duration = eT
-                        lastTime = consideredEvent.startTime
-
-                        patternsList += [pattern]
-
-            elif sliceType == "all":
-                patternsList = [originPattern]
-            else:
-                gspatternLog.error("sliceType %s not valid" % (sliceType))
-                assert False
-
-            for subPattern in patternsList:
-                if subPattern:
-                    viewpoint.events += [Event(duration=subPattern.duration,
-                                               startTime=subPattern.startTime,
-                                               tag=descriptor.getDescriptorForPattern(
-                                                   subPattern),
-                                               originPattern=subPattern)]
-
-            return viewpoint
-
-        if descriptor:
-            self.viewpoints[name] = _computeViewpoint(originPattern=self,
-                                                      descriptor=descriptor,
-                                                      sliceType=sliceType,
-                                                      name=name)
-        else:
-            if name == "chords":
-                from .descriptors.chord import Chord
-                self.viewpoints[name] = _computeViewpoint(originPattern=self,
-                                                          descriptor=Chord(),
-                                                          sliceType=4,
-                                                          name=name)
-        # can use it as a return value
-        return self.viewpoints[name]
-
     def printASCIIGrid(self, blockSize=1):
+
         def __areSilenceEvts(l):
             if len(l) > 0:
                 for e in l:
@@ -1110,14 +1083,11 @@ class Pattern(object):
             sustainASCII = '>'
             silenceASCII = '-'
             out = "["
-            p = self.getPatternWithTags(t,
-                                        makeCopy=True)  # .alignOnGrid(blockSize);
-            # p.fillWithSilences(maxSilenceTime = blockSize)
+            p = self.getPatternWithTags(t, makeCopy=True)
             isSilence = __areSilenceEvts(p.getActiveEventsAtTime(0))
-            inited = False
+            # inited = False
             lastActiveEvent = p.events[0]
             numSteps = int(self.duration * 1.0 / blockSize)
-
             for i in range(numSteps):
                 time = i * 1.0 * blockSize
                 el = p.getActiveEventsAtTime(time)
@@ -1138,11 +1108,34 @@ class Pattern(object):
                         lastActiveEvent = el[0]
 
                 isSilence = newSilenceState
-                inited = True
-
+                # inited = True
             out += "]: " + t
             print(out)
 
+    def timeStretch(self, ratio):
+        """Time-stretch a pattern.
+
+        Args:
+            ratio: the ratio used for time stretching
+        """
+        for e in self.events:
+            e.startTime *= ratio
+            e.duration *= ratio
+        self.duration *= ratio
+
+    def transpose(self, interval):
+        """
+        Transposes a Pattern to the desired interval.
+
+        Parameters
+        ----------
+        interval: int
+            transposition factor in semitones (positive or negative int)
+
+        """
+        for e in self.events:
+            e.pitch += interval
+            e.tag = [gsutil.pitch2name(e.pitch, gsdefs.pitchNames)]
 
 def patternToList(myPattern):
     """

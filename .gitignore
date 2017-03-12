@@ -13,7 +13,6 @@ docs/_build/*
 docs/gh-pages/*
 DBStyle.json
 gsapi/.idea/*
-examples/bassmine/output/*
 examples/notebooks/.ipynb_checkpoints
 profiled
 .coverage
@@ -21,3 +20,6 @@ htmlcov/
 coverage.xml
 .idea/
 .DS_Store
+output/*
+gsapi/__pycache__/
+models/*

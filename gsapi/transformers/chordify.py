@@ -52,7 +52,7 @@ class Chordify(BaseTransformer):
 
     def transformPattern(self):
         """Return a transformed Pattern"""
-        self.outputPattern = self.inputPattern.getACopyWithoutEvents()
+        self.outputPattern = self.inputPattern.copyWithoutEvents()
         p = -1
         for e in self.inputPattern:
             if e.startTime != p:
