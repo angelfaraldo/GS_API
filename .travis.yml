@@ -15,6 +15,7 @@ before_install:
 
 install:
     - pip install codecov
+    - pip install python-midi
     - if [[ $TRAVIS_PYTHON_VERSION == '3.5' ]]; then travis_retry pip install git+https://github.com/vishnubob/python-midi.git@feature/python3#egg=midi; fi
     - python setup.py install
 
