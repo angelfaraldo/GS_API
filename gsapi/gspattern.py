@@ -1,6 +1,11 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
+"""
+The gspattern module is the core of the GS-API. It declares the classes Event
+and Pattern, which are the main holders of musical symbolic information.
+"""
+
 from __future__ import absolute_import, division, print_function
 
 import collections
@@ -16,17 +21,17 @@ gspatternLog = logging.getLogger("gsapi.pattern")
 
 class Event(object):
     """
-    Represents an event of a pattern with startTime, duration, pitch,
-    velocity and one or integration tags.
+    Represents an event in a Pattern. Its attributes are startTime, duration,
+    pitch, velocity and one or more tags.
 
     Parameters
     ----------
     startTime: float
-        startTime of event.
+        startTime of the Event.
     duration: float
-        duration of event.
+        duration of Event.
     pitch: int
-        pitch of event in midi note numbers.
+        pitch of the Event in midi note numbers.
     velocity: int
         velocity of event in midi format (0-127).
     tag: string, tuple, object
@@ -37,7 +42,6 @@ class Event(object):
         via originPattern (see Pattern.generateViewpoints)
 
     """
-
     def __init__(self, startTime=0, duration=1, pitch=60, velocity=80,
                  tag=None, originPattern=None):
 
@@ -80,17 +84,16 @@ class Event(object):
 
     def hasOneCommonTagWith(self, event):
         """
-        Compare tags between events
+        Compare tags between events.
 
         Parameters
         ----------
         event: Event
-            event to compare with
+            an Event to compare with.
 
         Returns
         -------
-        Boolean
-            True if at least one tag is equal
+        bool: True if at least one tag is equal.
 
         """
         # if type(self.tag)!=type(event.tag):
@@ -101,10 +104,14 @@ class Event(object):
         """
         Compare this event's tags with a list of possible tag.
 
-        Args:
-            tags: list of tags to compare with
-        Returns:
-            True if at least one tag is equal
+        Parameters
+        ----------
+        tags: list
+            list of tags to compare with.
+
+        Returns
+        -------
+            bool: True if at least one tag is equal.
         """
         for t in tags:
             if (t == self.tag) or (t in self.tag):
@@ -112,49 +119,70 @@ class Event(object):
         return False
 
     def tagIs(self, tag):
-        """Compare this event's tag with a a given tag.
+        """
+        Compare this Event's tag with a given tag.
 
-        Args:
-            tag: tag to compare with
-        Returns:
-            True if all event tag is equal to given tag
+        Parameters
+        ----------
+        tag: str
+            the tag to compare with.
+
+        Returns
+        -------
+        bool: True if the event's tag is equal to the specified tag.
         """
         return self.tag == tag
 
-    def allTagsAreEqualWith(self, event):
-        """Compare this event's tag with an other event.
-
-        Args:
-            event: event to compare with
-        Returns:
-            True if tags are equal
+    def allTagsAreEqualWith(self, myEvent):
         """
-        self.tagIs(event.tag)
+        Compare this Event's tag with other Event's tags.
+
+        Parameters
+        ----------
+        myEvent: Event
+            Event to compare with.
+
+        Returns
+        -------
+            bool: True if tags are equal.
+
+        """
+        self.tagIs(myEvent.tag)
 
     def getEndTime(self):
-        """Return the time when this events ends
+        """Get the time at which the Event ends.
 
-        Returns:
-            The time when this event ends
+        Returns
+        -------
+        float: the time when this event ends.
+
         """
         return self.startTime + self.duration
 
     def copy(self):
-        """ Copy an event.
+        """
+        Copy an event.
 
-        Returns:
-            A deep copy of this event to be manipulated without changing
-            original.
+        Returns
+        -------
+        Event: A deepcopy of this event to be manipulated without changing the
+        original.
+
         """
         return copy.deepcopy(self)
 
     def cutInSteps(self, stepSize):
-        """ Cut an event in steps of stepsize length
+        """
+        Cut an event in steps of stepsize length.
 
-        Args:
-            stepSize: the desired size of each produced events
-        Returns:
-            a list of events of length `stepSize`
+        Parameters
+        ----------
+        stepSize: float
+            new size of each newly produced Event
+
+        Returns
+        -------
+            list: a list of Events of length `stepSize`
         """
         res = []
         num = max(1, int(self.duration / stepSize))  # if smaller still take it
@@ -166,11 +194,18 @@ class Event(object):
         return res
 
     def containsTime(self, time):
-        """Return true if event is active at given time
+        """
+        Check whether an Event is active at a specified time.
 
-        Args:
-            time: float
-                time to compare with
+        Parameters
+        ----------
+        time: float
+            time to compare with
+
+        Returns
+        -------
+        bool: True if event is active at the specified time.
+
         """
         return (time >= self.startTime) and (
         time < self.startTime + self.duration)
@@ -198,7 +233,6 @@ class Pattern(object):
         dict of ViewPoints
 
     """
-
     def __init__(self,
                  duration=0,
                  events=None,
@@ -558,17 +592,24 @@ class Pattern(object):
 
         return res
 
-    def getPatternWithoutTags(self, tagToLookFor, exactSearch=False,
-                              makeCopy=True):
-        """Returns a sub-pattern without the given tags.
+    def getPatternWithoutTags(self, tagToLookFor, exactSearch=False, makeCopy=True):
+        """
+        Returns a sub-pattern without the given tags.
 
-        Args:
-            tagToLookFor: tag or tag list: tags to be checked for
-            exactSearch: bool: if True the tags have to be exactly the same as tagToLookFor, else they can be included in events tag
-            makeCopy: do we return a copy of original events (avoid modifying originating events when modifying the returned subpattern)
+        Parameters
+        ----------
+        tagToLookFor: tag or tag list
+            tags to be checked for
+        exactSearch: bool
+            if True the tags have to be exactly the same as tagToLookFor,
+            else they can be included in events tag.
+        makeCopy: bool
+            do we return a copy of original events (avoid modifying originating
+             events when modifying the returned subpattern).
 
-        Returns:
-            a Pattern with events without given tags
+        Returns
+        -------
+            A Pattern with events without specified tags.
         """
 
         if isinstance(tagToLookFor, list):
@@ -596,19 +637,27 @@ class Pattern(object):
         return res
 
     def alignOnGrid(self, stepSize, repeatibleTags=['silence']):
-        """Align this pattern on a temporal grid.
-        Very useful to deal with step-sequenced pattern:
+        """
+        Align the pattern on a temporal grid.
+
+        Parameters
+        ----------
+        stepSize: int
+            temporal definition of the grid
+        repeatibleTags: list of str
+            tags
+
+        Notes
+        -----
+        Useful to deal with step-sequenced patterns:
         - all events durations are shortened to stepsize
         - all events startTimes are quantified to stepsize
 
-        RepeatibleTags allow to deal with `silences type` of events:
-        - if a silence spread over integration than one stepsize, we generate an event for each stepSize
+        RepeatibleTags allow to deal with `silences type` of events. If a
+        silence spread over tags than one stepsize, we generate an event
+        for each stepSize. Thus each step is ensured to be filled with one
+        distinct event at least.
 
-        Thus each step is ensured to be filled with one distinct event at least.
-
-        Args:
-            stepSize: temporal definition of the grid
-            repeatibleTags: tags
         """
         newEvents = []
         for e in self.events:
@@ -628,10 +677,14 @@ class Pattern(object):
         return self
 
     def removeOverlapped(self, usePitchValues=False):
-        """Remove overlapped elements.
+        """
+        Remove overlapped Events.
 
-            Args:
-                usePitchValues: use pitch to discriminate events
+        Parameters
+        ----------
+        usePitchValues: bool
+            use pitch to discriminate events
+
         """
         self.reorderEvents()
         newList = []
@@ -670,11 +723,16 @@ class Pattern(object):
         # return self
 
     def getAllIdenticalEvents(self, event, allTagsMustBeEquals=True):
-        """Get a list of event with same tags.
+        """
+        Get a list of events with the same tag or tags.
 
-        Args:
-            event:event to compare with
-            allTagsMustBeEquals: shall we get exact tags equality or be fine with one common tag (valable if tags are tuple)
+        Parameters
+        __________
+        event: Event
+            event to compare with
+        allTagsMustBeEquals: bool
+            if set to True, events are considered identical when all tags
+            coincide. It set to False, one common tag will produce output.
 
         Returns:
             list of events that have all or one tags in common
@@ -696,13 +754,21 @@ class Pattern(object):
 
     def fillWithSilences(self, maxSilenceTime=0, perTag=False,
                          silenceTag='silence', silencePitch=0):
-        """Fill empty time intervals (i.e no event) with silence event.
+        """
+        Fill empty time intervals (i.e no event) with event 'silence'.
 
-        Args:
-            maxSilenceTime: if positive value is given, will add multiple silence of maxSilenceTime for empty time larger than maxSilenceTime
-            perTag: fill silence for each Tag
-            silenceTag: tag that will be used when inserting the silence event
-            silencePitch : the desired pitch of new silences events
+        Parameters
+        ----------
+        maxSilenceTime: float
+            if positive value is given, will add multiple silence of
+            maxSilenceTime for empty time larger than maxSilenceTime.
+        perTag: bool
+            fill silence for each Tag
+        silenceTag: str
+            tag that will be used when inserting the silence event
+        silencePitch: int
+            the desired pitch of new silences events
+
         """
         self.reorderEvents()
 
@@ -750,8 +816,10 @@ class Pattern(object):
 
     def fillWithPreviousEvent(self):
         """
-        Fill gaps between onsets making longer the duration of the previous event.
+        Fill the gaps between onsets making longer
+        the duration of the previous event.
         """
+
         onsets = []
         for e in self.events:
             if e.startTime not in onsets:
@@ -762,14 +830,22 @@ class Pattern(object):
             e.duration = onsets[onsets.index(e.startTime) + 1] - e.startTime
 
     def getPatternForTimeSlice(self, startTime, length, trimEnd=True):
-        """Returns a pattern within given timeslice.
+        """
+        Returns a pattern within the given timeslice.
 
-        Args:
-            startTime: start time for time slice
-            length: length of time slice
-            trimEnd: cut any events that ends after startTime + length
-        Returns:
-            a new GSpattern within time slice
+        Parameters
+        ----------
+        startTime: float
+            start time for time slice
+        length: float
+            length of time slice
+        trimEnd: bool
+            cut any events ending after startTime + length.
+
+        Returns
+        -------
+            new Pattern within the given time slice.
+
         """
         p = self.getACopyWithoutEvents()
         p.startTime = startTime
@@ -787,9 +863,15 @@ class Pattern(object):
         return p
 
     def toJSONDict(self, useTagIndexing=True):
-        """Gives a standard dict for json output.
-        Args:
-        useTagIndexing: if true, tags are stored as indexes from a list of all tags (reduce size of json files)
+        """
+        Gives a standard dict for json output.
+
+        Parameters
+        ----------
+        useTagIndexing: bool
+            if True, tags are stored as indexes from a list of all tags
+            This reduces the size of the JSON file.
+
         """
         res = {}
         self.setDurationFromLastEvent()
@@ -827,10 +909,14 @@ class Pattern(object):
         return res
 
     def fromJSONDict(self, json, parentPattern=None):
-        """Loads a json API dict object to this pattern
+        """
+        Loads a JSON API dict object to this pattern
 
-        Args:
-            json: a dict created from reading json file with GS API JSON format
+        Parameters
+        ----------
+        json: dict
+            a dict created from reading json file with GS-API JSON format.
+
         """
         self.name = json['name']
         self.duration = json['timeInfo']['duration']
@@ -1058,12 +1144,12 @@ class Pattern(object):
             print(out)
 
 
-def patternToList(pattern):
+def patternToList(myPattern):
     """
-    Converts a pattern to a regular python list.
+    Converts a myPattern to a regular python list.
 
     """
     list_of_events = []
-    for event in pattern.events:
+    for event in myPattern.events:
         list_of_events.append([event.pitch, event.startTime, event.duration])
     return list_of_events

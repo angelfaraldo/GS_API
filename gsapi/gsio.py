@@ -1,19 +1,24 @@
 #!/usr/bin/env python
 # encoding: utf-8
+"""
+The gsio module contains fuctions allowing importing and exporting to and from
+various standards formats (MIDI, JSON and Python's picle).
+"""
 
 from __future__ import absolute_import, division, print_function
 
+import copy
 import glob
 import json
 import logging
+import math
 import os
-import sys
 import random
+import sys
 
-from . import gsdefs
-from . import gspattern
-from . import gsutil
+import midi
 
+from . import gsdefs, gspattern, gsutil
 
 if sys.version_info >= (3, 0):
     import pickle
@@ -24,343 +29,62 @@ gsioLog = logging.getLogger("gsapi.gsio")
 gsioLog.setLevel(level=logging.WARNING)
 
 
-def fromMidi(midiPath, NoteToTagsMap=gsdefs.pitchNames, tracksToGet=None,
-             TagsFromTrackNameEvents=False, filterOutNotMapped=True,
-             checkForOverlapped=False):
+# INTERNAL FUNCTIONS
+# =============================================================================
+
+def __formatNoteToTags(_noteToTags):
     """
-    Loads a midi file as a pattern.
+    Internal conversion for consistent noteTagMap structure.
 
-    Args:
-        midiPath: midi filePath
-        NoteToTagsMap: dictionary converting pitches to tags
-            if only interested in pitch, you can set this to "pitchNames",
-            or optionally set the value to the list of string for pitches from C
-            noteMapping maps classes to a list of possible mappings,
-            a mapping can be either:
-
-            * a tuple of (note, channel):
-                if one of those doesnt matter it canbe replaced by '*' character
-            * an integer:
-                if only pitch matters
-
-            for simplicity, one can pass only one integer (i.e not a list) for
-            one to one mappings if midi track contains the name of one element
-            of mapping, it'll be choosed without anyother consideration
-
-        TagsFromTrackNameEvents: use only track names to resolve mapping,
-            useful for midi containing named tracks
-        filterOutNotMapped: if set to true, don't add event not represented by `NoteToTagsMap`
-        tracksToGet: if not empty, specifies Midi tracks wanted either by name or index
-        checkForOverlapped: if true will check that two consecutiveEvents with
-            exactly same MidiNote are not overlapping
     """
-    _NoteToTagsMap = __formatNoteToTags(NoteToTagsMap)
-    return __fromMidiFormatted(midiPath=midiPath,
-                               NoteToTagsMap=_NoteToTagsMap,
-                               tracksToGet=tracksToGet,
-                               TagsFromTrackNameEvents=TagsFromTrackNameEvents,
-                               filterOutNotMapped=filterOutNotMapped,
-                               checkForOverlapped=checkForOverlapped)
-
-
-def fromMidiCollection(midiGlobPath, NoteToTagsMap=gsdefs.pitchNames,
-                       tracksToGet=None, TagsFromTrackNameEvents=False,
-                       filterOutNotMapped=True, desiredLength=0):
-    """
-    Loads a midi collection.
-
-    Args:
-        midiGlobPath: midi filePath in glob naming convention (e.g. '/folder/To/Crawl/\*.mid')
-        NoteToTagsMap:
-        tracksToGet:
-        TagsFromTrackNameEvents:
-        filterOutNotMapped:
-        desiredLength: optionally cut patterns in equal length
-
-    Returns:
-        a list of Pattern build from Midi folder
-    """
-    res = []
-    _NoteToTagsMap = __formatNoteToTags(NoteToTagsMap)
-    for f in glob.glob(midiGlobPath):
-        name = os.path.splitext(os.path.basename(f))[0]
-        gsioLog.info("getting " + name)
-        p = fromMidi(f,
-                     _NoteToTagsMap,
-                     TagsFromTrackNameEvents=TagsFromTrackNameEvents,
-                     filterOutNotMapped=filterOutNotMapped)
-        if desiredLength > 0:
-            res += p.splitInEqualLengthPatterns(desiredLength, makeCopy=False)
-        else:
-            res += [p]
-    return res
-
-
-def fromJSONFile(filePath, conserveTuple=False):
-    """Load a pattern to internal JSON Format.
-
-    Args:
-        filePath: filePath where to load it
-        conserveTuple: bool
-    """
-
-    def hinted_tuple_hook(obj):
-        # print obj
-
-        if isinstance(obj, list): return [hinted_tuple_hook(e) for e in obj]
-        if isinstance(obj, dict):
-            if '__tuple__' in obj: return tuple(obj['items'])
-            return {k: hinted_tuple_hook(e) for k, e in obj.items()}
-        else:
-            return obj
-
-    with open(filePath, 'r') as f:
-        return gspattern.Pattern().fromJSONDict(json.load(f, object_hook=hinted_tuple_hook if conserveTuple else None))
-
-
-def toJSONFile(myPattern, folderPath, useTagIndexing=True, nameSuffix=None, conserveTuple=False):
-    """Save a pattern to internal JSON Format.
-
-    Args:
-        myPattern: a Pattern
-        folderPath: folder where to save it, fileName will be pattern.name+nameSuffix+".json"
-        nameSuffix : string to append to name of the file
-        useTagIndexing: if true, tags are stored as indexes from a list of all tags (reduce size of json files)
-        conserveTuple: useful if some tags can be tuple but much slower
-    """
-
-    filePath = os.path.join(folderPath, myPattern.name + (nameSuffix or "") + ".json")
-    if not os.path.exists(folderPath):
-        os.makedirs(folderPath)
-
-    class TupleEncoder(json.JSONEncoder):
-        """ encoder conserving tuple type info"""
-
-        def checkTuple(self, item):
-            if isinstance(item, tuple): return {'__tuple__': True, 'items': item}
-            if isinstance(item, list): return [self.checkTuple(e) for e in item]
-            if isinstance(item, dict):
-                return {k: self.checkTuple(e) for k, e in item.items()}
-            else:
-                return item
-
-        def iterencode(self, item):
-            return json.JSONEncoder.iterencode(self, self.checkTuple(item))
-
-    encoderClass = TupleEncoder if conserveTuple else None
-    with open(filePath, 'w') as f:
-        json.dump(myPattern.toJSONDict(useTagIndexing=useTagIndexing),
-                  f,
-                  cls=encoderClass,
-                  indent=1,
-                  separators=(',', ':'))
-    return os.path.abspath(filePath)
-
-
-def fromPickleFile(filePath):
-    """Load a pattern from pickle Format.
-
-    Args:
-        filePath: filePath where to load it
-    """
-    with open(filePath, 'rb') as f:
-        return pickle.load(f)
-
-
-def toPickleFile(myPattern, folderPath, nameSuffix=None):
-    """Save a pattern to python's pickle Format.
-
-    Args:
-        myPattern: a Pattern
-        folderPath: folder where to save it, fileName will be pattern.name+nameSuffix+".json"
-        nameSuffix : string to append to name of the file
-    """
-    filePath = os.path.join(folderPath, myPattern.name + (nameSuffix or "") + ".pickle")
-    if not os.path.exists(folderPath):
-        os.makedirs(folderPath)
-    with open(filePath, 'wb') as f:
-        pickle.dump(myPattern, f)
-    return os.path.abspath(filePath)
-
-
-def __formatNoteToTags(_NoteToTags):
-    """Internal conversion for consistent NoteTagMap structure."""
-
-    import copy
-    NoteToTags = copy.copy(_NoteToTags)
-    if NoteToTags == "pitchNames":
-        NoteToTags = {"pitchNames": ""}
-    for n in NoteToTags:
+    noteToTags = copy.copy(_noteToTags)
+    if noteToTags == "pitchNames":
+        noteToTags = {"pitchNames": ""}
+    for n in noteToTags:
         if n == "pitchNames":
-            if not NoteToTags["pitchNames"]:
-                NoteToTags["pitchNames"] = gsdefs.pitchNames
+            if not noteToTags["pitchNames"]:
+                noteToTags["pitchNames"] = gsdefs.pitchNames
         else:
-            if not isinstance(NoteToTags[n], list):
-                NoteToTags[n] = [NoteToTags[n]]
-            for i in range(len(NoteToTags[n])):
-                if isinstance(NoteToTags[n][i], int):
-                    NoteToTags[n][i] = (NoteToTags[n][i], "*")
-    return NoteToTags
+            if not isinstance(noteToTags[n], list):
+                noteToTags[n] = [noteToTags[n]]
+            for i in range(len(noteToTags[n])):
+                if isinstance(noteToTags[n][i], int):
+                    noteToTags[n][i] = (noteToTags[n][i], "*")
+    return noteToTags
 
 
-def __fromMidiFormatted(midiPath, NoteToTagsMap, tracksToGet=None,
-                        TagsFromTrackNameEvents=False, filterOutNotMapped=True,
-                        checkForOverlapped=False):
-    """
-    Internal function that accepts only consistent NoteTagMap
-    structure as created by __formatNoteToTags.
-    """
-    import math
-    import midi
-    import os
-
-    globalMidi = midi.read_midifile(midiPath)
-
-    globalMidi.make_ticks_abs()
-    myPattern = gspattern.Pattern()
-
-    myPattern.name = os.path.basename(midiPath)
-
-    # boolean to avoid useless string creation
-    extremeLog = gsioLog.getEffectiveLevel() <= logging.DEBUG
-
-    # get time signature first
-    gsioLog.info("start processing %s" % myPattern.name)
-    __findTimeInfoFromMidi(myPattern, globalMidi)
-
-    tick_to_quarter_note = 1.0 / globalMidi.resolution
-
-    myPattern.events = []
-    lastNoteOff = 0
-    notFoundTags = []
-    trackIdx = 0
-    trackDuration = None
-    for tracks in globalMidi:
-        shouldSkipTrack = False
-        for e in tracks:
-            if shouldSkipTrack:
-                continue
-
-            if not TagsFromTrackNameEvents:
-                noteTag = ()
-
-            if midi.MetaEvent.is_event(e.statusmsg):
-                if e.metacommand == midi.TrackNameEvent.metacommand:
-                    if tracksToGet and not ((e.text in tracksToGet) or (trackIdx in tracksToGet)):
-                        gsioLog.info("skipping track: %i %s" % (trackIdx, e.text))
-                        shouldSkipTrack = True
-                        continue
-                    else:
-                        gsioLog.info(myPattern.name + ": getting track: %i %s" % (trackIdx, e.text))
-
-                    if TagsFromTrackNameEvents:
-                        noteTag = __findTagsFromName(e.text, NoteToTagsMap)
-
-            if midi.EndOfTrackEvent.is_event(e.statusmsg):
-                thisDuration = e.tick * tick_to_quarter_note
-                trackDuration = max(trackDuration, thisDuration) if trackDuration else thisDuration
-                continue
-
-            isNoteOn = midi.NoteOnEvent.is_event(e.statusmsg)
-            isNoteOff = midi.NoteOffEvent.is_event(e.statusmsg)
-
-            if isNoteOn or isNoteOff:
-                pitch = e.pitch  # optimize pitch property access
-                tick = e.tick
-                velocity = e.get_velocity()
-
-                if velocity == 0:
-                    isNoteOff = True
-                    isNoteOn = False
-
-                curBeat = tick * 1.0 * tick_to_quarter_note
-                if not noteTag:
-                    if TagsFromTrackNameEvents:
-                        continue
-                    noteTag = __findTagsFromPitchAndChannel(pitch, e.channel, NoteToTagsMap)
-
-                if not noteTag:
-                    if [e.channel, pitch] not in notFoundTags:
-                        gsioLog.info(myPattern.name + ": no tags found for "
-                                                  "pitch %d on channel %d" % (pitch, e.channel))
-                        notFoundTags += [[e.channel, pitch]]
-                    if filterOutNotMapped:
-                        continue
-
-                if isNoteOn:
-                    if extremeLog: gsioLog.debug("on %d %f" % (pitch, curBeat))
-                    myPattern.events += [gspattern.Event(startTime=curBeat,
-                                                         duration=-1,
-                                                         pitch=pitch,
-                                                         velocity=velocity,
-                                                         tag=noteTag)]
-
-                if isNoteOff:
-                    if extremeLog:
-                        gsioLog.debug("off %d %f" % (pitch, curBeat))
-                    foundNoteOn = False
-                    isTrueNoteOff = midi.NoteOffEvent.is_event(e.statusmsg)
-                    for i in reversed(myPattern.events):
-
-                        if (i.pitch == pitch) and (i.tag == noteTag) and \
-                                ((isTrueNoteOff and (curBeat >= i.startTime)) or curBeat > i.startTime) \
-                                and i.duration <= 0.0001:
-                            foundNoteOn = True
-
-                            i.duration = max(0.0001, curBeat - i.startTime)
-                            lastNoteOff = max(curBeat, lastNoteOff)
-                            gsioLog.info("set duration %f at start %f " % (i.duration, i.startTime))
-                            break
-                    if not foundNoteOn:
-                        gsioLog.warning(myPattern.name + ": not found note on\n %s\n%s\n%s , %s " % (e,
-                                                                                                 myPattern.events[-1],
-                                                                                                 noteTag,
-                                                                                                 curBeat))
-
-        trackIdx += 1
-
-    elementSize = 4.0 / myPattern.timeSignature[1]
-    barSize = myPattern.timeSignature[0] * elementSize
-    lastBarPos = math.ceil(lastNoteOff * 1.0 / barSize) * barSize
-    myPattern.duration = trackDuration or lastBarPos
-    if checkForOverlapped:
-        myPattern.removeOverlapped(usePitchValues=True)
-
-    return myPattern
-
-
-def __findTimeInfoFromMidi(pattern, midiFile):
-    import midi
-
+def __findTimeInfoFromMidi(myPattern, midiFile):
     foundTimeSignatureEvent = False
     foundTempo = False
-    pattern.timeSignature = (4, 4)
-    pattern.bpm = 60
-    pattern.resolution = midiFile.resolution  # hide it in pattern to be able to retrieve it when exporting
+    myPattern.timeSignature = (4, 4)
+    myPattern.bpm = 60
+    # hide it in myPattern to be able to retrieve it when exporting
+    myPattern.resolution = midiFile.resolution
 
     for tracks in midiFile:
         for e in tracks:
 
             if midi.MetaEvent.is_event(e.statusmsg):
                 if e.metacommand == midi.TimeSignatureEvent.metacommand:
-                    if foundTimeSignatureEvent and (pattern.timeSignature != (e.numerator, e.denominator)):
-                        gsioLog.error(pattern.name + ": multiple time "
-                                                   "signature found, not supported, "
-                                                   "result can be alterated")
+                    if foundTimeSignatureEvent and (
+                                myPattern.timeSignature != (
+                                    e.numerator, e.denominator)):
+                        gsioLog.error(myPattern.name + ": multiple time "
+                                                       "signature found, not supported, "
+                                                       "result can be alterated")
                     foundTimeSignatureEvent = True
-                    pattern.timeSignature = (e.numerator, e.denominator)
-                    #  e.metronome = e.thirtyseconds ::  do we need that ???
+                    myPattern.timeSignature = (e.numerator, e.denominator)
                 elif e.metacommand == midi.SetTempoEvent.metacommand:
                     if foundTempo:
-                        gsioLog.error(pattern.name + ": multiple bpm found, not supported")
+                        gsioLog.error(
+                                myPattern.name + ": multiple bpm found, not supported")
                     foundTempo = True
-                    pattern.bpm = e.bpm
+                    myPattern.bpm = e.bpm
 
         if foundTimeSignatureEvent:
-            # pass
             break
     if not foundTimeSignatureEvent:
-        gsioLog.info(pattern.name + ": no time signature event found")
+        gsioLog.info(myPattern.name + ": no time signature event found")
 
 
 def __findTagsFromName(name, noteMapping):
@@ -385,16 +109,230 @@ def __findTagsFromPitchAndChannel(pitch, channel, noteMapping):
     return res
 
 
-def toMidi(myPattern, midiMap=None, folderPath="output/", name=None):
-    """ Function to write Pattern instance to MIDI.
+def __fromMidiFormatted(midiPath, noteToTagsMap, tracksToGet=None,
+                        tagsFromTrackNameEvents=False, filterOutNotMapped=True,
+                        checkForOverlapped=False):
+    """
+    Internal function that accepts only consistent noteTagMap
+    structures as created by __formatNoteToTags.
 
-    Args:
-        midiMap: mapping used to translate tags to MIDI pitch
-        folderPath: folder where MIDI file is stored
-        name: name of the file
+    """
+    globalMidi = midi.read_midifile(midiPath)
+    globalMidi.make_ticks_abs()
+    myPattern = gspattern.Pattern()
+    myPattern.name = os.path.basename(midiPath)
+
+    # boolean to avoid useless string creation
+    extremeLog = gsioLog.getEffectiveLevel() <= logging.DEBUG
+
+    # get time signature first
+    gsioLog.info("start processing %s" % myPattern.name)
+    __findTimeInfoFromMidi(myPattern, globalMidi)
+
+    tick_to_quarter_note = 1.0 / globalMidi.resolution
+    myPattern.events = []
+    lastNoteOff = 0
+    notFoundTags = []
+    trackIdx = 0
+    trackDuration = None
+    for tracks in globalMidi:
+        shouldSkipTrack = False
+        for e in tracks:
+            if shouldSkipTrack:
+                continue
+            if not tagsFromTrackNameEvents:
+                noteTag = ()
+            if midi.MetaEvent.is_event(e.statusmsg):
+                if e.metacommand == midi.TrackNameEvent.metacommand:
+                    if tracksToGet and not (
+                        (e.text in tracksToGet) or (trackIdx in tracksToGet)):
+                        gsioLog.info(
+                            "skipping track: %i %s" % (trackIdx, e.text))
+                        shouldSkipTrack = True
+                        continue
+                    else:
+                        gsioLog.info(
+                            myPattern.name + ": getting track: %i %s" % (
+                            trackIdx, e.text))
+
+                    if tagsFromTrackNameEvents:
+                        noteTag = __findTagsFromName(e.text, noteToTagsMap)
+            if midi.EndOfTrackEvent.is_event(e.statusmsg):
+                thisDuration = e.tick * tick_to_quarter_note
+                trackDuration = max(trackDuration,
+                                    thisDuration) if trackDuration else thisDuration
+                continue
+            isNoteOn = midi.NoteOnEvent.is_event(e.statusmsg)
+            isNoteOff = midi.NoteOffEvent.is_event(e.statusmsg)
+            if isNoteOn or isNoteOff:
+                pitch = e.pitch  # optimize pitch property access
+                tick = e.tick
+                velocity = e.get_velocity()
+                if velocity == 0:
+                    isNoteOff = True
+                    isNoteOn = False
+                curBeat = tick * 1.0 * tick_to_quarter_note
+                if not noteTag:
+                    if tagsFromTrackNameEvents:
+                        continue
+                    noteTag = __findTagsFromPitchAndChannel(pitch, e.channel,
+                                                            noteToTagsMap)
+                if not noteTag:
+                    if [e.channel, pitch] not in notFoundTags:
+                        gsioLog.info(myPattern.name + ": no tags found for "
+                                                      "pitch %d on channel %d" % (
+                                     pitch, e.channel))
+                        notFoundTags += [[e.channel, pitch]]
+                    if filterOutNotMapped:
+                        continue
+                if isNoteOn:
+                    if extremeLog: gsioLog.debug("on %d %f" % (pitch, curBeat))
+                    myPattern.events += [gspattern.Event(startTime=curBeat,
+                                                         duration=-1,
+                                                         pitch=pitch,
+                                                         velocity=velocity,
+                                                         tag=noteTag)]
+                if isNoteOff:
+                    if extremeLog:
+                        gsioLog.debug("off %d %f" % (pitch, curBeat))
+                    foundNoteOn = False
+                    isTrueNoteOff = midi.NoteOffEvent.is_event(e.statusmsg)
+                    for i in reversed(myPattern.events):
+                        if (i.pitch == pitch) and (i.tag == noteTag) and \
+                                ((isTrueNoteOff and (
+                                    curBeat >= i.startTime)) or curBeat > i.startTime) \
+                                and i.duration <= 0.0001:
+                            foundNoteOn = True
+                            i.duration = max(0.0001, curBeat - i.startTime)
+                            lastNoteOff = max(curBeat, lastNoteOff)
+                            gsioLog.info("set duration %f at start %f " % (
+                            i.duration, i.startTime))
+                            break
+                    if not foundNoteOn:
+                        gsioLog.warning(myPattern.name +
+                                        ": not found note on\n %s\n%s\n%s , %s "
+                                        % (e, myPattern.events[-1], noteTag,
+                                           curBeat))
+        trackIdx += 1
+    elementSize = 4.0 / myPattern.timeSignature[1]
+    barSize = myPattern.timeSignature[0] * elementSize
+    lastBarPos = math.ceil(lastNoteOff * 1.0 / barSize) * barSize
+    myPattern.duration = trackDuration or lastBarPos
+    if checkForOverlapped:
+        myPattern.removeOverlapped(usePitchValues=True)
+    return myPattern
+
+
+# MIDI
+# =============================================================================
+
+def fromMidi(midiFile, noteToTagsMap=gsdefs.pitchNames, tracksToGet=None,
+             tagsFromTrackNameEvents=False, filterOutNotMapped=True,
+             checkForOverlapped=False):
+    """
+    Loads a MIDI file as a pattern.
+
+    Parameters
+    ----------
+    midiFile: str
+        a valid midi filePath.
+    noteToTagsMap: dict
+        a dictionary converting pitches to tags.
+    tracksToGet: list of str or int
+        if not empty, specifies Midi tracks wanted either by name or index
+    tagsFromTrackNameEvents: bool
+        use only track names to resolve mapping.
+        Useful for midi containing named tracks.
+    filterOutNotMapped: bool
+        if True, don't add event not represented by `NoteToTagsMap`.
+    checkForOverlapped: bool
+        If True, will check that two consecutive Events with exactly same
+        Midi Note are not overlapping.
+
+    Notes
+    -----
+    You can set NoteToTagsMap to "pitchNames" or optionally set the value to
+    the list of string for pitches from C. noteMapping maps classes to a list
+    of possible mappings. A mapping can be either:
+
+    * a tuple of (note, channel):
+        if one of those does not matter it can be replaced by a '*' character
+    * an integer:
+        if only pitch matters
+
+    For simplicity, one can pass only one integer (i.e not a list) for
+    one to one mappings. If the MIDI track contains the name of one element
+    of the mapping, it'll be choosen without anyother consideration
+
+    """
+    _noteToTagsMap = __formatNoteToTags(noteToTagsMap)
+    return __fromMidiFormatted(midiPath=midiFile,
+                               noteToTagsMap=_noteToTagsMap,
+                               tracksToGet=tracksToGet,
+                               tagsFromTrackNameEvents=tagsFromTrackNameEvents,
+                               filterOutNotMapped=filterOutNotMapped,
+                               checkForOverlapped=checkForOverlapped)
+
+
+def fromMidiCollection(midiGlobPath, noteToTagsMap=gsdefs.pitchNames,
+                       tracksToGet=None, tagsFromTrackNameEvents=False,
+                       filterOutNotMapped=True, desiredLength=0):
+    """
+    Loads a collection of MIDI Files
+
+    Parameters
+    ----------
+    midiGlobPath: str
+        midi filePath in glob style naming convention ('/midi/folder/*.mid')
+    noteToTagsMap: dict
+        a dictionary converting pitches to tags.
+    tracksToGet: str or int
+        if not empty, specifies Midi tracks wanted either by name or index
+    tagsFromTrackNameEvents: bool
+        use only track names to resolve mapping.
+        Useful for midi containing named tracks.
+    filterOutNotMapped: bool
+        if True, don't add event not represented by `NoteToTagsMap`.
+    desiredLength: float
+        optionally cut patterns in equal length
+
+    Returns
+    -------
+    A list of patterns build from the Midi folder
+
+    """
+    res = []
+    _noteToTagsMap = __formatNoteToTags(noteToTagsMap)
+    for f in glob.glob(midiGlobPath):
+        name = os.path.splitext(os.path.basename(f))[0]
+        gsioLog.info("getting " + name)
+        p = fromMidi(f, _noteToTagsMap,
+                     tagsFromTrackNameEvents=tagsFromTrackNameEvents,
+                     filterOutNotMapped=filterOutNotMapped)
+        if desiredLength > 0:
+            res += p.splitInEqualLengthPatterns(desiredLength, makeCopy=False)
+        else:
+            res += [p]
+    return res
+
+
+def toMidi(myPattern, midiMap=None, folderPath="./", name=None):
+    """
+    Function to write a Pattern to a MIDI file.
+
+    Parameters
+    ----------
+    myPattern: str
+        A reference to a Pattern
+    midiMap: dict
+        mapping used to translate tags to MIDI pitch.
+        see "gsdefs.py" for implemented midiMaps
+    folderPath: str
+        a valid folderpath where the MIDI file will be stored.
+    name: str
+        name of the file to write to.
     """
 
-    import midi
     # Instantiate a MIDI Pattern (contains a list of tracks)
     pattern = midi.Pattern(tick_relative=False, format=1)
     pattern.resolution = getattr(myPattern, 'resolution', 960)
@@ -402,13 +340,10 @@ def toMidi(myPattern, midiMap=None, folderPath="output/", name=None):
     # Instantiate a MIDI Track (contains a list of MIDI events)
     track = midi.Track(tick_relative=False)
 
-    track.append(midi.TimeSignatureEvent(numerator=myPattern.timeSignature[0], denominator=myPattern.timeSignature[1]))
-    # obscure events
-    # timeSignatureEvent.set_metronome(32)
-    # timeSignatureEvent.set_thirtyseconds(4)
-
+    track.append(midi.TimeSignatureEvent(numerator=myPattern.timeSignature[0],
+                                         denominator=myPattern.timeSignature[
+                                             1]))
     track.append(midi.TrackNameEvent(text=myPattern.name))
-
     track.append(midi.SetTempoEvent(bpm=myPattern.bpm))
 
     # Append the track to the pattern
@@ -423,8 +358,10 @@ def toMidi(myPattern, midiMap=None, folderPath="output/", name=None):
         if midiMap:
             pitch = midiMap[e.tag[0]]
         if midiMap is None:
-            track.append(midi.NoteOnEvent(tick=startTick, velocity=e.velocity, pitch=pitch, channel=channel))
-            track.append(midi.NoteOffEvent(tick=endTick, velocity=e.velocity, pitch=pitch, channel=channel))
+            track.append(midi.NoteOnEvent(tick=startTick, velocity=e.velocity,
+                                          pitch=pitch, channel=channel))
+            track.append(midi.NoteOffEvent(tick=endTick, velocity=e.velocity,
+                                           pitch=pitch, channel=channel))
 
     track.append(midi.EndOfTrackEvent(tick=int(myPattern.duration * beatToTick)))
 
@@ -445,18 +382,135 @@ def toMidi(myPattern, midiMap=None, folderPath="output/", name=None):
     return exportedPath
 
 
-def write2pickle(name, data, path='../../models/'):
+# JSON
+# =============================================================================
+
+def fromJSONFile(filePath, conserveTuple=False):
+    """
+    Loads a pattern to the internal JSON Format.
+
+    Parameters
+    ----------
+    filePath: path
+        filePath where to load it
+    conserveTuple: bool
+        Useful if some tags were tuples, but performs more slowly.
+
+    """
+    def hinted_tuple_hook(obj):
+        if isinstance(obj, list): return [hinted_tuple_hook(e) for e in obj]
+        if isinstance(obj, dict):
+            if '__tuple__' in obj: return tuple(obj['items'])
+            return {k: hinted_tuple_hook(e) for k, e in obj.items()}
+        else:
+            return obj
+
+    with open(filePath, 'r') as f:
+        return gspattern.Pattern().fromJSONDict(json.load(f, object_hook=hinted_tuple_hook if conserveTuple else None))
+
+
+def toJSONFile(myPattern, folderPath, useTagIndexing=True,
+               nameSuffix=None, conserveTuple=False):
+    """
+    Saves a pattern to internal JSON Format.
+
+    Parameters
+    ----------
+    myPattern: Pattern
+        the Pattern to save.
+    folderPath: path
+        folder to save the file.
+        the fileName will be pattern.name+nameSuffix+".json"
+    nameSuffix: str
+        string to append to name of the file
+    useTagIndexing: bool
+        if True, tags are stored as indexes from a list of all tags.
+        this reduces the size of JSON files.
+    conserveTuple: bool
+        useful if some tags were tuples, but performs more slowly.
+    """
+
+    filePath = os.path.join(folderPath, myPattern.name + (nameSuffix or "") + ".json")
+    if not os.path.exists(folderPath):
+        os.makedirs(folderPath)
+
+    class TupleEncoder(json.JSONEncoder):
+        """
+        Encoder conserving tuple type information.
+
+        """
+        def checkTuple(self, item):
+            if isinstance(item, tuple): return {'__tuple__': True, 'items': item}
+            if isinstance(item, list): return [self.checkTuple(e) for e in item]
+            if isinstance(item, dict):
+                return {k: self.checkTuple(e) for k, e in item.items()}
+            else:
+                return item
+
+        def iterencode(self, item):
+            return json.JSONEncoder.iterencode(self, self.checkTuple(item))
+
+    encoderClass = TupleEncoder if conserveTuple else None
+    with open(filePath, 'w') as f:
+        json.dump(myPattern.toJSONDict(useTagIndexing=useTagIndexing), f,
+                  cls=encoderClass, indent=1, separators=(',', ':'))
+    return os.path.abspath(filePath)
+
+
+# PICKLE
+# =============================================================================
+
+def fromPickleFile(filePath):
+    """
+    Loads a pattern from a pickle format.
+
+    Parameters
+    ----------
+    filePath: path
+        file path where to load it.
+
+    """
+    with open(filePath, 'rb') as f:
+        return pickle.load(f)
+
+
+def toPickleFile(myPattern, folderPath, nameSuffix=None):
+    """
+    Saves a pattern into python's pickle format.
+
+    Parameters
+    ----------
+    myPattern: Pattern
+        the Pattern to save.
+    folderPath: path
+        the folder where to save the pickle file.
+        The fileName will be pattern.name + nameSuffix + ".pickle"
+    nameSuffix: str
+        string to append to the name of the file.
+
+    """
+    filePath = os.path.join(folderPath, myPattern.name + (nameSuffix or "") + ".pickle")
+    if not os.path.exists(folderPath):
+        os.makedirs(folderPath)
+    with open(filePath, 'wb') as f:
+        pickle.dump(myPattern, f)
+    return os.path.abspath(filePath)
+
+
+def write2pickle(name, data, path='../models/'):
     """
     Write numpy array in pickle format to the selected location
 
-    Args:
-        name: name of the output pickle file
-        data: numpy array to be exported to pickle format
-        path: (optional) output folder path
+    Arguments
+    ---------
+    name: str
+        name of the output pickle file
+    data: numpy array
+        numpy array to be exported to pickle format
+    path: str (optional)
+         output folder path
 
     """
-    # path = 'rhythmic_analysis/graph_models/pickle/'
-    import os
     if not os.path.exists(path):
         os.makedirs(path)
     with open(path + name + '.pickle', 'wb') as f:
@@ -466,17 +520,20 @@ def write2pickle(name, data, path='../../models/'):
 
 class Dataset(object):
     """
-    Class that holds a list of patterns imported from a specific gpath in glob
-    style.
+    Class that holds a list of patterns imported
+    from a specific gpath in glob style.
 
     """
-    defaultMidiFolder = os.path.abspath(
-        __file__ + "../examples/corpora/drums/")
+    defaultMidiFolder = os.path.abspath(__file__ + "../examples/corpora/harmony/")
     defaultMidiGlob = "*.mid"
 
     def __init__(self, midiFolder=defaultMidiFolder, midiGlob=defaultMidiGlob,
                  midiMap=gsdefs.simpleDrumMap, checkForOverlapped=True):
-
+        self.patterns = None
+        self.midiGlob = None
+        self.globPath = None
+        self.files = None
+        self.idx = None
         self.midiFolder = midiFolder
         self.setMidiGlob(midiGlob)
         self.midiMap = midiMap
@@ -484,8 +541,6 @@ class Dataset(object):
         self.importMIDI()
 
     def setMidiGlob(self, globPattern):
-
-        import glob
         if '.mid' in globPattern[-4:]:
             globPattern = globPattern[:-4]
         self.midiGlob = globPattern + '.mid'
@@ -512,22 +567,20 @@ class Dataset(object):
                                 sliceType=sliceType)
 
     def importMIDI(self, fileName=""):
-
         if fileName:
             self.setMidiGlob(fileName)
-
         self.patterns = []
-
         for p in self.files:
             gsioLog.info('using ' + p)
             p = fromMidi(p, self.midiMap, tracksToGet=[],
                               checkForOverlapped=self.checkForOverlapped)
             self.patterns += [p]
-
         return self.patterns
 
     def __getitem__(self, index):
-        """Utility to access paterns as list member: GSDataset[idx] = GSDataset.patterns[idx]
+        """
+        Utility to access paterns as list member:
+        Dataset[idx] = Dataset.patterns[idx]
+
         """
         return self.patterns[index]
-

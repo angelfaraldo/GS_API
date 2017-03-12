@@ -11,7 +11,7 @@ if __name__ == '__main__':
 
 from .descriptors.density import Density
 from .descriptors.number_of_tags import NumberOfTags
-from .gspattern import Dataset
+from .gsdataset import Dataset
 
 class DensityDrumSpace:
         # #Descriptor1: number of instruments

@@ -24,7 +24,7 @@ customNoteMapping = {"spam": [(35, '*'), 45],
 # desiredPatternLength = 16
 patterns = gsio.fromMidiCollection(crawledFolder,
                                    {"Kick": 36},
-                                   TagsFromTrackNameEvents=False)
+                                   tagsFromTrackNameEvents=False)
 
 print(patterns[0])
 print([x.startTime for x in patterns[0].events])

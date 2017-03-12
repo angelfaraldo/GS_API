@@ -1,13 +1,18 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
+"""
+The gsdefs module contains default dictionary definitions of pitch names, chord
+ definitions and instrument tags.
+"""
 from __future__ import absolute_import, division, print_function
 
 # ==============================
 # DEFAULT DICTIONARY DEFINITIONS
 # ==============================
 
-# ------------ CHORDS ------------
+# CHORDS
+# =============================================================================
 
 chordIntervals = {"0":           [],
                   "5":           [23],
@@ -81,7 +86,8 @@ chordTypes = {"0":          [0],
 
 # TODO i've read 5th 9th an 11th weren't usualy played
 
-# GENERAL MIDI ----------------------------------------------------------------
+# GENERAL MIDI
+# =============================================================================
 
 generalMidiMap = {"Acoustic Bass Drum": 35,
                   "Bass Drum 1":        36,
@@ -156,7 +162,8 @@ verySimpleDrumMap = {"Kick":     36,
                      "OpenHH":   46}
 
 
-# PITCH -----------------------------------------------------------------------
+# PITCH
+# =============================================================================
 
 pitchNames = ["C", "C#", "D", "Eb", "E", "F",
               "F#", "G", "Ab", "A", "Bb", "B"]

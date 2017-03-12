@@ -5,7 +5,7 @@ from __future__ import absolute_import, division, print_function
 
 from setuptools import setup, find_packages
 
-from distutils.extension import Extension
+# from distutils.extension import Extension
 
 
 # LEGACY IMPORTS
@@ -21,9 +21,10 @@ def checkLazySetupCommands():
     toAppend = ['clean', '--all']
     toAppend = ['build']
 
-    # remainder for pip maintainers
+    # remainder for pip maintainers:
     # (once .pypirc edited)
-    # bump the GSAPI_FULL_VERSION in GSAPI_FULL_VERSION.py then: python setup.py sdist bdist_wheel upload
+    # bump the GSAPI_FULL_VERSION in GSAPI_FULL_VERSION.py
+    # then: python setup.py sdist bdist_wheel upload
 
     if len(sys.argv) == 1:
         for s in toAppend:
@@ -37,7 +38,8 @@ if __name__ == '__main__':
     print("gsapi value%s" % getGsapiFullVersion())
     checkLazySetupCommands()
 
-# for now python-midi is not officially on pip3 so we need to install it manually and it's name become midi...
+# for now python-midi is not officially on pip3
+# we need to install it manually and it's name become midi:
 midiRequiredName = 'midi' if sys.version_info >= (3, 0) else 'python-midi'
 
 setup(name='gsapi',

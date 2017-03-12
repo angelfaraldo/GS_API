@@ -1,4 +1,8 @@
-v 1.0.1
+1.0.4 (12 Mar 2017)
+-------------------
+- new folder architecture
+
+
 1.0.1 (11 Nov 2016)
 -------------------
 - add global help for gsapi module
