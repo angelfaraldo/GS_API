@@ -43,15 +43,14 @@ p.addEvent(gspattern.Event(startTime=0, duration=1, pitch=64, velocity=127, tag=
 p.addEvent(gspattern.Event(1, 3, 62, 51, "Snare"))
 ```
 
-Now, let us get all files in a specified folder:
+Now, let us get all files in a specified folder and slice them into 16 beat
+patterns:
 ```python
 from gsapi import *
 # we select a folder containing midi files:
 dataset = gsdataset.Dataset(midiFolder="your/folder",midiGlob="*.mid", midiMap=gsdefs.generalMidiMap)
 allPatternsSliced = []
 
-
-# And we split all files into Patterns of 16 beat each:
 for midiPattern in dataset.patterns:
 	for sliced in midiPattern.splitInEqualLengthPatterns(16):
 		allPatternsSliced+=[sliced]
@@ -59,8 +58,8 @@ for midiPattern in dataset.patterns:
 print(allPatternsSliced)
 ```
 
-We can use gsapi to characterise a pattern with any given descriptor.
-Continuing the previous example, we could estimate the rhythmic density of the
+We can use the GS-API to characterize a pattern with any given descriptor.
+Following the previous example, we could estimate the rhythmic density of the
  patterns:
 
 ```python
@@ -72,8 +71,8 @@ for pattern in dataset.patterns:
 	densityOfKick = density.getDescriptorForPattern(kickPattern)
 ```
 
-More advanced usages create transition probabilities from corpora of music in 
-order to generate music in that style: 
+We can easily extract transition probabilities from corpora of music in 
+order to generate new music in that style:
 
 ```python
 from gsapi import *
@@ -114,12 +113,13 @@ listOfGSPatterns = gsio.fromMidiCollection(midiGlobPath, NoteToTagsMap)
 ```
 
 ### Obtaining Help
-All submodules within the GS-API provide help by typing help(moduleName)
+All submodules within the GS-API are documented and can provide help by typing 
+help(moduleName).
 
 ```python
 help(gspattern.Pattern)
 help(gsdataset.Dataset)
 ```
 
-In the *examples* folder you can find more detailed documentation, turorials 
-and integration examples.
+In the *examples* folder you can find more detailed documentation, ipython 
+notebook turorials and other integration examples with Pd, music21 and JUCE.
