@@ -6,7 +6,7 @@ from __future__ import absolute_import, division, print_function
 
 class BaseDescriptor(object):
     def __init__(self):
-        pass
+        self.type = "descriptor"
 
     def configure(self, paramDict):
         """

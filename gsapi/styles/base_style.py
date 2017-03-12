@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function
 
 class BaseStyle(object):
     """
-    Base class for defining a style.
+    Base class to define a style.
 
     Such class needs to provide the following methods:
         - generateStyle(self, PatternClasses)
@@ -17,7 +17,7 @@ class BaseStyle(object):
 
     """
     def __init__(self):
-        self.type = "None"
+        self.type = "style"
 
     def generateStyle(self, PatternClasses):
         """
@@ -28,7 +28,7 @@ class BaseStyle(object):
 
     def generatePattern(self, seed=None):
         """
-        Generates a new random pattern using a seed if not "None"
+        Generates a new random pattern using a seed if not "None".
         Ideally same seed should lead to same pattern.
 
         """
@@ -37,7 +37,7 @@ class BaseStyle(object):
     def getDistanceFromStyle(self, Pattern):
         """
         Returns a normalized value representing the 'styleness' of a pattern.
-        1 represents the farthest from the style.
+        1 represents the farthest from the style, 0 the closest.
 
         """
         raise NotImplementedError("Not Implemented.")

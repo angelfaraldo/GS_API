@@ -335,12 +335,11 @@ def toMidi(myPattern, midiMap=None, folderPath="./", name=None):
     pattern = midi.Pattern(tick_relative=False, format=1)
     pattern.resolution = getattr(myPattern, 'resolution', 960)
 
-    # Instantiate a MIDI Track (contains a list of MIDI events)
+    # Instantiate a MIDI track (contains a list of MIDI events)
     track = midi.Track(tick_relative=False)
 
     track.append(midi.TimeSignatureEvent(numerator=myPattern.timeSignature[0],
-                                         denominator=myPattern.timeSignature[
-                                             1]))
+                                         denominator=myPattern.timeSignature[1]))
     track.append(midi.TrackNameEvent(text=myPattern.name))
     track.append(midi.SetTempoEvent(bpm=myPattern.bpm))
 
@@ -348,13 +347,13 @@ def toMidi(myPattern, midiMap=None, folderPath="./", name=None):
     pattern.append(track)
     beatToTick = pattern.resolution
     for e in myPattern.events:
-
         startTick = int(beatToTick * e.startTime)
         endTick = int(beatToTick * e.getEndTime())
         pitch = e.pitch
         channel = 1
         if midiMap:
-            pitch = midiMap[e.tag[0]]
+            # todo: check if there is a problem with multiple tags:
+            pitch = midiMap[e.tag] # was midiMap[e.tag[0]]
         if midiMap is None:
             track.append(midi.NoteOnEvent(tick=startTick, velocity=e.velocity,
                                           pitch=pitch, channel=channel))

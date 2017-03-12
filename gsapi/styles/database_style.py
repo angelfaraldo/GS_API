@@ -4,7 +4,6 @@ import random
 
 from .base_style import BaseStyle
 from ..gspattern import Pattern
-# import copy
 
 
 class DatabaseStyle(BaseStyle):

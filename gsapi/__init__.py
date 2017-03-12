@@ -1,8 +1,8 @@
-# from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import, division, print_function
 
 # import logging
 
-from . import bassmine, gsconfig, gsdefs, gsdataset, gsmarkov, gsio, gspattern, gsutil
+from . import bassmine, gsconfig, gsdefs, gsdataset, gsio, gspattern, gsutil
 from .descriptors import *
 from .extractors import *
 from .styles import *

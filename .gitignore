@@ -26,3 +26,4 @@ output/*.json
 output/*.png
 output/*.csv
 output/mr_scruff/
+output/*.mid

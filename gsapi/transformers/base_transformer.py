@@ -15,7 +15,7 @@ class BaseTransformer(object):
     """
 
     def __init__(self):
-        self.type = "None"
+        self.type = "Transformer"
 
     def configure(self, paramDict):
         """
