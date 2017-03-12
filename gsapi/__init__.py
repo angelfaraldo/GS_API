@@ -2,7 +2,7 @@
 
 # import logging
 
-from . import bassmine, gsconfig, gsdefs, gsmarkov, gsio, gspattern, gsutil
+from . import bassmine, gsconfig, gsdefs, gsdataset, gsmarkov, gsio, gspattern, gsutil
 from .descriptors import *
 from .extractors import *
 from .styles import *
