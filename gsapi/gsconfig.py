@@ -42,15 +42,14 @@ def getGsapiShortVersion():
 
 
 class ColoredFormatter(logging.Formatter):
+
     def __init__(self, msg):
         logging.Formatter.__init__(self, msg)
 
     def format(self, record):
-
         levelname = record.levelname
         if ColoredLogger.USE_COLOR_OUTPUT and levelname in COLORS:
-            levelname_color = COLOR_SEQ % (30 + COLORS[levelname]) + \
-                              levelname + RESET_SEQ
+            levelname_color = COLOR_SEQ % (30 + COLORS[levelname]) + levelname + RESET_SEQ
             record.levelname = levelname_color
             record.boldSeq = BOLD_SEQ
             record.resetSeq = RESET_SEQ
@@ -122,7 +121,7 @@ else:
     # For debugging purpose this line can be commented out
     # However, when using local and global version of gsapi at the same time,
     # the following line is triggered some times:
-    raise ImportError("Double import of Logging, it should never happen!")
+    raise ImportError("Double import of logging, it should never happen!")
     pass
 
 setDefaultLoggingLevel(logging.WARNING)

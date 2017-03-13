@@ -353,7 +353,7 @@ def toMidi(myPattern, midiMap=None, folderPath="./", name=None):
         channel = 1
         if midiMap:
             # todo: check if there is a problem with multiple tags:
-            pitch = midiMap[e.tag] # was midiMap[e.tag[0]]
+            pitch = midiMap[e.tag[0]] # was midiMap[e.tag[0]]
         if midiMap is None:
             track.append(midi.NoteOnEvent(tick=startTick, velocity=e.velocity,
                                           pitch=pitch, channel=channel))

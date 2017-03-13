@@ -43,7 +43,7 @@ class Event(object):
 
     """
     def __init__(self, startTime=0, duration=1, pitch=60, velocity=80,
-                 tag=None, originPattern=None):
+                 tag=(), originPattern=None):  # todo "tag" was None
 
         self.startTime = startTime
         self.duration = duration
@@ -51,14 +51,13 @@ class Event(object):
         self.velocity = velocity
         self.originPattern = originPattern
 
-        if not tag:
-            self.tag = ()
-        elif isinstance(tag, list):
-            gspatternLog.error("tag cannot be a list, converting to tuple")
+        # if not tag:
+        #     self.tag = ()
+        if isinstance(tag, list):
+            gspatternLog.error("'tag' cannot be a list, converting to tuple")
             self.tag = tuple(tag)
         elif not isinstance(tag, collections.Hashable):
-            gspatternLog.error(
-                "tag has to be hashable, trying conversion to tuple")
+            gspatternLog.error("'tag' has to be hashable, trying conversion to tuple")
             self.tag = (tag,)
         else:
             self.tag = tag
@@ -234,7 +233,7 @@ class Pattern(object):
 
     """
     def __init__(self, duration=0, events=None, bpm=120, timeSignature=(4, 4),
-                 key="", originFilePath="", name=""):
+                 key="unknown", originFilePath="unknown", name="noName"):
         self.duration = duration
         if events:
             self.events = events
@@ -284,7 +283,7 @@ class Pattern(object):
         '[tag] pitch velocity startTime duration'
 
         """
-        s = "Pattern %s: Duration: %.2f, BPM: %.2f, TimeSignature: %d/%d\n" % (
+        s = "Name: %s, Duration: %.2f, BPM: %.2f, TimeSignature: %i/%i\n" % (
             self.name,
             self.duration,
             self.bpm,
@@ -297,14 +296,17 @@ class Pattern(object):
     def __setitem__(self, index, item):
         self.events[index] = item
 
-    def addEvent(self, event):
+    def addEvent(self, myEvent):
         """
         Add an event increasing its duration if needed.
 
-        Args:
-            event: the Event to be added
+        Parameters
+        ----------
+        myEvent: Event
+            the Event to be added.
+
         """
-        self.events += [event]
+        self.events += [myEvent]
         self.setDurationFromLastEvent()
 
     def alignOnGrid(self, stepSize, repeatibleTags=['silence']):
