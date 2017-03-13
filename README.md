@@ -8,7 +8,7 @@ The GS-API is a Python/C++ library for manipulating musical symbolic data.
 The GS-API (GiantSteps API) provides Python and C++ classes and an interface 
 for dealing with musical data. Its main features are:
 
-* flexible input/output from/to JSON/MIDI
+* flexible input/output from/to JSON/MIDI.
 * Rhythm generation, both agnostic and based on styles.
 * Style and music-theoretical based harmony progression generation.
 * More to come.
@@ -113,8 +113,8 @@ listOfGSPatterns = gsio.fromMidiCollection(midiGlobPath, NoteToTagsMap)
 ```
 
 ### Obtaining Help
-All submodules within the GS-API are documented and can provide help by typing 
-help(moduleName).
+All submodules within the GS-API are documented and can provide basic help by
+typing help(moduleName).
 
 ```python
 help(gspattern.Pattern)
@@ -122,4 +122,4 @@ help(gsdataset.Dataset)
 ```
 
 In the *examples* folder you can find more detailed documentation, ipython 
-notebook turorials and other integration examples with Pd, music21 and JUCE.
+notebook tutorials and other integration examples with Pd, music21 and JUCE.
