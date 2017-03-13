@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function
 
 import random
 
-from .base_style import BaseStyle
+from .base_style import *
 from ..gspattern import Pattern
 
 

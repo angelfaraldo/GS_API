@@ -5,7 +5,7 @@ from __future__ import absolute_import, division, print_function
 
 from math import ceil
 
-from .base_descriptor import BaseDescriptor
+from .base_descriptor import *
 
 
 class Syncopation(BaseDescriptor):

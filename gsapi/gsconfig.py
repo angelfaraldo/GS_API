@@ -25,7 +25,6 @@ COLORS = {'WARNING': YELLOW,
 
 # =============================================================================
 
-
 def getGsapiFullVersion():
     """
     Helper to get the full version name.

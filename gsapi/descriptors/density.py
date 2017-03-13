@@ -3,7 +3,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-from .base_descriptor import BaseDescriptor
+from .base_descriptor import *
 
 
 class Density(BaseDescriptor):
