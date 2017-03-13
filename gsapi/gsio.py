@@ -8,6 +8,7 @@ various standards formats (MIDI, JSON and Python's picle).
 from __future__ import absolute_import, division, print_function
 
 import copy
+import collections
 import glob
 import json
 import logging
@@ -314,7 +315,7 @@ def fromMidiCollection(midiGlobPath, noteToTagsMap=gsdefs.pitchNames,
     return res
 
 
-def toMidi(myPattern, midiMap=None, folderPath="./", name=None):
+def toMidi(myPattern, midiMap=gsdefs.noteMap, folderPath="./", name=None):
     """
     Function to write a Pattern to a MIDI file.
 
@@ -346,18 +347,20 @@ def toMidi(myPattern, midiMap=None, folderPath="./", name=None):
     # Append the track to the pattern
     pattern.append(track)
     beatToTick = pattern.resolution
-    for e in myPattern.events:
-        startTick = int(beatToTick * e.startTime)
-        endTick = int(beatToTick * e.getEndTime())
-        pitch = e.pitch
+    for evt in myPattern.events:
+        startTick = int(beatToTick * evt.startTime)
+        endTick = int(beatToTick * evt.getEndTime())
+        # pitch = e.pitch
         channel = 1
-        if midiMap:
-            # todo: check if there is a problem with multiple tags:
-            pitch = midiMap[e.tag[0]] # was midiMap[e.tag[0]]
-        if midiMap is None:
-            track.append(midi.NoteOnEvent(tick=startTick, velocity=e.velocity,
+        if isinstance(midiMap, tuple):
+            pitch = midiMap[evt.tag[0]] # provided a key return pitch value
+        if isinstance(midiMap, collections.Hashable):
+            pitch = midiMap[evt.tag]
+        elif midiMap is None: # todo: confirm that this condition sobra!
+            pitch = evt.pitch # todo esto lo he movido de más arriba!
+        track.append(midi.NoteOnEvent(tick=startTick, velocity=evt.velocity,
                                           pitch=pitch, channel=channel))
-            track.append(midi.NoteOffEvent(tick=endTick, velocity=e.velocity,
+        track.append(midi.NoteOffEvent(tick=endTick, velocity=evt.velocity,
                                            pitch=pitch, channel=channel))
 
     track.append(midi.EndOfTrackEvent(tick=int(myPattern.duration * beatToTick)))

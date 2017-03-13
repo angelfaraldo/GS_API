@@ -106,7 +106,7 @@ def updateList(param):
 def styleChanged(style):
 
 	style = styleParam.value
-	VSTPlugin.dataSet.importMIDI(style)
+	VSTPlugin.dataSet.importMidi(style)
 	print(VSTPlugin.dataSet.files)
 
 	# VSTPlugin.setup()

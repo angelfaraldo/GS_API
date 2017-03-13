@@ -17,7 +17,7 @@ from . import gsdefs, gsutil
 
 # logger for pattern related operations
 gspatternLog = logging.getLogger("gsapi.gspattern")
-gspatternLog.setLevel(level=logging.INFO)
+gspatternLog.setLevel(level=logging.WARNING)
 
 
 class Event(object):
@@ -44,7 +44,7 @@ class Event(object):
 
     """
     def __init__(self, startTime=0, duration=1, pitch=60, velocity=80,
-                 tag=(), originPattern=None):  # todo "tag" was None
+                 tag=None, originPattern=None):
 
         self.startTime = startTime
         self.duration = duration
@@ -52,10 +52,10 @@ class Event(object):
         self.velocity = velocity
         self.originPattern = originPattern
 
-        # if not tag:
-        #     self.tag = ()
+        if not tag:
+            self.tag = ()
         if isinstance(tag, list):
-            gspatternLog.error("'tag' cannot be a list, converting to tuple")
+            gspatternLog.error("'tag' can't be a list, converting to tuple")
             self.tag = tuple(tag)
         elif not isinstance(tag, collections.Hashable):
             gspatternLog.error("'tag' has to be hashable, trying conversion to tuple")
