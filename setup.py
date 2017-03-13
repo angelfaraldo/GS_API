@@ -33,7 +33,7 @@ def checkLazySetupCommands():
 
 if __name__ == '__main__':
     import sys
-    from gsapi.gsconfig import getGsapiFullVersion
+    from gsapi import *
     print("gsapi value%s" % getGsapiFullVersion())
     checkLazySetupCommands()
 

@@ -16,7 +16,8 @@ import math
 from . import gsdefs, gsutil
 
 # logger for pattern related operations
-gspatternLog = logging.getLogger("gsapi.pattern")
+gspatternLog = logging.getLogger("gsapi.gspattern")
+gspatternLog.setLevel(level=logging.INFO)
 
 
 class Event(object):
@@ -929,17 +930,14 @@ class Pattern(object):
                             newList += [e]
                             overLappedEv += [ee]
                         else:
-                            gspatternLog.info(
-                                "strict overlapping of start times %s with %s" % (
-                                e, ee))
+                            gspatternLog.info("strict overlapping of start times %s with %s" % (e, ee))
 
                 if ee.startTime > (e.startTime + e.duration):
                     break
             if not found:
                 newList += [e]
             else:
-                gspatternLog.info(
-                    "remove overlapping %s with %s" % (e, overLappedEv))
+                gspatternLog.info("remove overlapping %s with %s" % (e, overLappedEv))
             idx += 1
         self.events = newList
         # return self

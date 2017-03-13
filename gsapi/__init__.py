@@ -1,17 +1,19 @@
 from __future__ import absolute_import, division, print_function
 
-# import logging
+# import logging (this was uncommented in martins version)
 
-from . import bassmine, gsconfig, gsdefs, gsdataset, gsio, gspattern, gsutil
-from .descriptors import *
-from .extractors import *
-from .styles import *
-from .transformers import *
+from .gsversion import *
+from .gslog import gsapiLogger
 
-
-#if __name__ == '__main__':
-#    p = gspattern.Pattern()
-#    p.addEvent(gspattern.Event(0, 2, 60, 100))
-#    p.addEvent(gspattern.Event(1, 1, 60, 100))
-#    gsconfig.logger.setLevel(level=logging.ERROR)
-#    gsconfig.logger.warning(p.duration)
+from . import gsutil
+from . import gsdefs
+from . import gspattern
+from . import gsdataset
+# from .gspattern import Event, Pattern
+# from .gsdataset import Dataset
+from . import gsio
+from . import extractors
+from . import styles
+from . import descriptors
+from . import transformers
+from . import bassmine

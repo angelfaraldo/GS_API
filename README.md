@@ -39,7 +39,7 @@ velocity of 127; and a second event tagged "Snare" starting at time 1, with a du
 ```python
 from gsapi import *
 p = gspattern.Pattern()
-p.addEvent(gspattern.Event(startTime=0, duration=1, pitch=64, velocity=127, tag="Kick")
+p.addEvent(gspattern.Event(startTime=0, duration=1, pitch=64, velocity=127, tag="Kick"))
 p.addEvent(gspattern.Event(1, 3, 62, 51, "Snare"))
 ```
 

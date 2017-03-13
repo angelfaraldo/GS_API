@@ -8,12 +8,12 @@ files at once.
 from __future__ import absolute_import, division, print_function
 
 import glob
-import logging
 import os
 import random
 
-from . import gsdefs, gsio
+from . import gsio, gsdefs
 
+import logging
 gsdatasetLog = logging.getLogger("gsapi.gsdataset")
 gsdatasetLog.setLevel(level=logging.WARNING)
 
