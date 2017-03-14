@@ -354,10 +354,12 @@ def toMidi(myPattern, midiMap=gsdefs.noteMap, folderPath="./", name=None):
         channel = 1
         if isinstance(midiMap, tuple):
             pitch = midiMap[evt.tag[0]] # provided a key return pitch value
-        if isinstance(midiMap, collections.Hashable):
+        elif isinstance(midiMap, collections.Hashable):
             pitch = midiMap[evt.tag]
-        elif midiMap is None: # todo: confirm that this condition sobra!
-            pitch = evt.pitch # todo esto lo he movido de más arriba!
+        #elif midiMap is None: # todo: confirm that this condition sobra!
+         #   pitch = evt.pitch
+        else:
+            pitch = evt.pitch  # todo esto lo he movido de más arriba!
         track.append(midi.NoteOnEvent(tick=startTick, velocity=evt.velocity,
                                           pitch=pitch, channel=channel))
         track.append(midi.NoteOffEvent(tick=endTick, velocity=evt.velocity,

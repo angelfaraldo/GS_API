@@ -1,6 +1,6 @@
 from __future__ import absolute_import, division, print_function
 
-# import logging (this was uncommented in martins version)
+import logging
 
 from .gsversion import *
 from .gslog import gsapiLogger
