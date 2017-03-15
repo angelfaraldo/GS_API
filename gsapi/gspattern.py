@@ -15,7 +15,7 @@ import math
 
 from . import gsdefs, gsutil
 
-# logger for pattern related operations
+#logger for pattern related operations
 gspatternLog = logging.getLogger("gsapi.gspattern")
 gspatternLog.setLevel(level=logging.WARNING)
 
@@ -234,7 +234,7 @@ class Pattern(object):
 
     """
     def __init__(self, duration=0, events=None, bpm=120, timeSignature=(4, 4),
-                 key="unknown", originFilePath="unknown", name="noName"):
+                 key="unknown",  originFilePath=None, name="untitled"):
         self.duration = duration
         if events:
             self.events = events
@@ -248,6 +248,7 @@ class Pattern(object):
         self.name = name
         self.startTime = 0
         self.originPattern = None
+        # self.resolution = None # todo I've aded this from __findTimeInfo
 
     def __eq__(self, other):
         if isinstance(other, Pattern):
@@ -284,12 +285,16 @@ class Pattern(object):
         '[tag] pitch velocity startTime duration'
 
         """
-        s = "Name: %s, Duration: %.2f, BPM: %.2f, TimeSignature: %i/%i\n" % (
+        s = "Name: %s, Duration: %.2f, BPM: %.2f, " \
+            "TimeSignature: %i/%i, Key: %s\n" \
+            "FilePath: %s\n" % (
             self.name,
             self.duration,
             self.bpm,
             self.timeSignature[0],
-            self.timeSignature[1])
+            self.timeSignature[1],
+            self.key,
+            self.originFilePath)
         for e in self.events:
             s += str(e) + "\n"
         return s

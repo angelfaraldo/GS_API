@@ -2,7 +2,7 @@
 # encoding: utf-8
 """
 The gsio module contains fuctions allowing importing and exporting to and from
-various standards formats (MIDI, JSON and Python's picle).
+various standards formats (MIDI, JSON and Python's pickle).
 """
 
 from __future__ import absolute_import, division, print_function
@@ -57,13 +57,12 @@ def __findTimeInfoFromMidi(myPattern, midiFile):
     foundTimeSignatureEvent = False
     foundTempo = False
     myPattern.timeSignature = (4, 4)
-    myPattern.bpm = 60
+    myPattern.bpm = 120
     # hide it in myPattern to be able to retrieve it when exporting
     myPattern.resolution = midiFile.resolution
 
     for tracks in midiFile:
         for e in tracks:
-
             if midi.MetaEvent.is_event(e.statusmsg):
                 if e.metacommand == midi.TimeSignatureEvent.metacommand:
                     if foundTimeSignatureEvent and (
@@ -83,7 +82,7 @@ def __findTimeInfoFromMidi(myPattern, midiFile):
         if foundTimeSignatureEvent:
             break
     if not foundTimeSignatureEvent:
-        gsioLog.info(myPattern.name + ": no time signature event found")
+        gsioLog.info(myPattern.name + ": no timeSignature event found")
 
 
 def __findTagsFromName(name, noteMapping):

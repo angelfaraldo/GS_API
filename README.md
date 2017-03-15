@@ -3,7 +3,7 @@ GS-API
 
 The GS-API is a Python/C++ library for manipulating musical symbolic data.
 
-###Overview
+### Overview
 
 The GS-API (GiantSteps API) provides Python and C++ classes and an interface 
 for dealing with musical data. Its main features are:
@@ -14,7 +14,7 @@ for dealing with musical data. Its main features are:
 * More to come.
 
 
-###Installing the library
+### Installing the library
 Installing the latests stable release can be done via pip:
 ```
 pip install gsapi
@@ -31,7 +31,7 @@ python setup.py build
 python setup.py install
 ```
 
-###Basic Use Examples
+### Basic Use Examples
 
 The following lines will create a *Pattern* p with two events: one event tagged as "Kick" starting at time 0, with a duration of 1, a Midi Note Number 64 and a Midi 
 velocity of 127; and a second event tagged "Snare" starting at time 1, with a duration of 3, Midi Note Number 62 and Midi velocity of 51.

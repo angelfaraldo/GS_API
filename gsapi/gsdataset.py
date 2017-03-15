@@ -16,7 +16,6 @@ from . import gsio, gsdefs
 
 import logging
 gsdatasetLog = logging.getLogger("gsapi.gsdataset")
-
 gsdatasetLog.setLevel(level=logging.WARNING)
 
 
@@ -88,7 +87,7 @@ class Dataset(object):
             self.setMidiGlob(fileName)
         self.patterns = []
         for p in self.files:
-            gsdatasetLog.info('using ' + p)
+            gsdatasetLog.info('Parsing ' + p)
             p = gsio.fromMidi(p, self.midiMap, tracksToGet=[],
                               checkForOverlapped=self.checkForOverlapped)
             self.patterns += [p]
