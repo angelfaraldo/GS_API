@@ -1,3 +1,7 @@
+# !/usr/bin/env python
+# encoding: utf-8
+
+
 from __future__ import absolute_import, division, print_function
 
 import logging
@@ -274,7 +278,7 @@ class EventRegistry(object):
 
 
 class AbstractEvent(object):
-    __slots__ = ['tick', 'data']
+    # __slots__ = ['tick', 'data']
     name = "Generic MIDI Event"
     length = 0
     statusmsg = 0x0
@@ -317,7 +321,7 @@ class AbstractEvent(object):
 
 
 class Event(AbstractEvent):
-    __slots__ = ['channel']
+    #  __slots__ = ['channel']
     name = 'Event'
 
     def __init__(self, **kw):
@@ -373,7 +377,7 @@ and NoteOff events.
 
 
 class NoteEvent(Event):
-    __slots__ = ['pitch', 'velocity']
+    #  __slots__ = ['pitch', 'velocity']
     length = 2
 
     def get_pitch(self):
@@ -426,7 +430,7 @@ class AfterTouchEvent(Event):
 
 
 class ControlChangeEvent(Event):
-    __slots__ = ['control', 'value']
+    #  __slots__ = ['control', 'value']
     statusmsg = 0xB0
     length = 2
     name = 'Control Change'
@@ -449,7 +453,7 @@ class ControlChangeEvent(Event):
 
 
 class ProgramChangeEvent(Event):
-    __slots__ = ['value']
+    #  __slots__ = ['value']
     statusmsg = 0xC0
     length = 1
     name = 'Program Change'
@@ -464,7 +468,7 @@ class ProgramChangeEvent(Event):
 
 
 class ChannelAfterTouchEvent(Event):
-    __slots__ = ['value']
+    #  __slots__ = ['value']
     statusmsg = 0xD0
     length = 1
     name = 'Channel After Touch'
@@ -479,7 +483,7 @@ class ChannelAfterTouchEvent(Event):
 
 
 class PitchWheelEvent(Event):
-    __slots__ = ['pitch']
+    #  __slots__ = ['pitch']
     statusmsg = 0xE0
     length = 2
     name = 'Pitch Wheel'
@@ -607,7 +611,7 @@ class EndOfTrackEvent(MetaEvent):
 
 
 class SetTempoEvent(MetaEvent):
-    __slots__ = ['bpm', 'mpqn']
+    #  __slots__ = ['bpm', 'mpqn']
     name = 'Set Tempo'
     metacommand = 0x51
     length = 3
@@ -637,7 +641,7 @@ class SmpteOffsetEvent(MetaEvent):
 
 
 class TimeSignatureEvent(MetaEvent):
-    __slots__ = ['numerator', 'denominator', 'metronome', 'thirtyseconds']
+    #  __slots__ = ['numerator', 'denominator', 'metronome', 'thirtyseconds']
     name = 'Time Signature'
     metacommand = 0x58
     length = 4
@@ -676,7 +680,7 @@ class TimeSignatureEvent(MetaEvent):
 
 
 class KeySignatureEvent(MetaEvent):
-    __slots__ = ['alternatives', 'minor']
+    #  __slots__ = ['alternatives', 'minor']
     name = 'Key Signature'
     metacommand = 0x59
     length = 2
