@@ -16,9 +16,9 @@ import math
 import os
 import sys
 
-import midi
 
-from . import gsdefs, gspattern, gsutil
+
+from . import gsdefs, gspattern, gsutil, midiio
 
 if sys.version_info >= (3, 0):
     import pickle
@@ -63,8 +63,8 @@ def __findTimeInfoFromMidi(myPattern, midiFile):
 
     for tracks in midiFile:
         for e in tracks:
-            if midi.MetaEvent.is_event(e.statusmsg):
-                if e.metacommand == midi.TimeSignatureEvent.metacommand:
+            if midiio.MetaEvent.is_event(e.statusmsg):
+                if e.metacommand == midiio.TimeSignatureEvent.metacommand:
                     if foundTimeSignatureEvent and (
                                 myPattern.timeSignature != (
                                     e.numerator, e.denominator)):
@@ -73,7 +73,7 @@ def __findTimeInfoFromMidi(myPattern, midiFile):
                                                        "result can be altered")
                     foundTimeSignatureEvent = True
                     myPattern.timeSignature = (e.numerator, e.denominator)
-                elif e.metacommand == midi.SetTempoEvent.metacommand:
+                elif e.metacommand == midiio.SetTempoEvent.metacommand:
                     if foundTempo:
                         gsioLog.error(myPattern.name + ": multiple bpm found, not supported")
                     foundTempo = True
@@ -115,7 +115,7 @@ def __fromMidiFormatted(midiPath, noteToTagsMap, tracksToGet=None,
     structures as created by __formatNoteToTags.
 
     """
-    globalMidi = midi.read_midifile(midiPath)
+    globalMidi = midiio.read_midifile(midiPath)
     globalMidi.make_ticks_abs()
     myPattern = gspattern.Pattern()
     myPattern.name = os.path.basename(midiPath)
@@ -140,8 +140,8 @@ def __fromMidiFormatted(midiPath, noteToTagsMap, tracksToGet=None,
                 continue
             if not tagsFromTrackNameEvents:
                 noteTag = ()
-            if midi.MetaEvent.is_event(e.statusmsg):
-                if e.metacommand == midi.TrackNameEvent.metacommand:
+            if midiio.MetaEvent.is_event(e.statusmsg):
+                if e.metacommand == midiio.TrackNameEvent.metacommand:
                     if tracksToGet and not (
                         (e.text in tracksToGet) or (trackIdx in tracksToGet)):
                         gsioLog.info(
@@ -155,13 +155,13 @@ def __fromMidiFormatted(midiPath, noteToTagsMap, tracksToGet=None,
 
                     if tagsFromTrackNameEvents:
                         noteTag = __findTagsFromName(e.text, noteToTagsMap)
-            if midi.EndOfTrackEvent.is_event(e.statusmsg):
+            if midiio.EndOfTrackEvent.is_event(e.statusmsg):
                 thisDuration = e.tick * tick_to_quarter_note
                 trackDuration = max(trackDuration,
                                     thisDuration) if trackDuration else thisDuration
                 continue
-            isNoteOn = midi.NoteOnEvent.is_event(e.statusmsg)
-            isNoteOff = midi.NoteOffEvent.is_event(e.statusmsg)
+            isNoteOn = midiio.NoteOnEvent.is_event(e.statusmsg)
+            isNoteOff = midiio.NoteOffEvent.is_event(e.statusmsg)
             if isNoteOn or isNoteOff:
                 pitch = e.pitch  # optimize pitch property access
                 tick = e.tick
@@ -194,7 +194,7 @@ def __fromMidiFormatted(midiPath, noteToTagsMap, tracksToGet=None,
                     if extremeLog:
                         gsioLog.debug("off %d %f" % (pitch, curBeat))
                     foundNoteOn = False
-                    isTrueNoteOff = midi.NoteOffEvent.is_event(e.statusmsg)
+                    isTrueNoteOff = midiio.NoteOffEvent.is_event(e.statusmsg)
                     for i in reversed(myPattern.events):
                         if (i.pitch == pitch) and (i.tag == noteTag) and \
                                 ((isTrueNoteOff and (
@@ -332,16 +332,16 @@ def toMidi(myPattern, midiMap=gsdefs.noteMap, folderPath="./", name=None):
     """
 
     # Instantiate a MIDI Pattern (contains a list of tracks)
-    pattern = midi.Pattern(tick_relative=False, format=1)
+    pattern = midiio.Pattern(tick_relative=False, frmt=1)
     pattern.resolution = getattr(myPattern, 'resolution', 960)
 
     # Instantiate a MIDI track (contains a list of MIDI events)
-    track = midi.Track(tick_relative=False)
+    track = midiio.Track(tick_relative=False)
 
-    track.append(midi.TimeSignatureEvent(numerator=myPattern.timeSignature[0],
+    track.append(midiio.TimeSignatureEvent(numerator=myPattern.timeSignature[0],
                                          denominator=myPattern.timeSignature[1]))
-    track.append(midi.TrackNameEvent(text=myPattern.name))
-    track.append(midi.SetTempoEvent(bpm=myPattern.bpm))
+    track.append(midiio.TrackNameEvent(text=myPattern.name))
+    track.append(midiio.SetTempoEvent(bpm=myPattern.bpm))
 
     # Append the track to the pattern
     pattern.append(track)
@@ -359,12 +359,12 @@ def toMidi(myPattern, midiMap=gsdefs.noteMap, folderPath="./", name=None):
          #   pitch = evt.pitch
         else:
             pitch = evt.pitch  # todo esto lo he movido de más arriba!
-        track.append(midi.NoteOnEvent(tick=startTick, velocity=evt.velocity,
+        track.append(midiio.NoteOnEvent(tick=startTick, velocity=evt.velocity,
                                           pitch=pitch, channel=channel))
-        track.append(midi.NoteOffEvent(tick=endTick, velocity=evt.velocity,
+        track.append(midiio.NoteOffEvent(tick=endTick, velocity=evt.velocity,
                                            pitch=pitch, channel=channel))
 
-    track.append(midi.EndOfTrackEvent(tick=int(myPattern.duration * beatToTick)))
+    track.append(midiio.EndOfTrackEvent(tick=int(myPattern.duration * beatToTick)))
 
     # make tick relatives
     track.sort(key=lambda e: e.tick)
@@ -379,7 +379,7 @@ def toMidi(myPattern, midiMap=gsdefs.noteMap, folderPath="./", name=None):
         name += ".mid"
     exportedPath = os.path.join(folderPath, name)
 
-    midi.write_midifile(exportedPath, pattern)
+    midiio.write_midifile(exportedPath, pattern)
     return exportedPath
 
 

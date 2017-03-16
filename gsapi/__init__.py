@@ -17,3 +17,4 @@ from . import styles
 from . import descriptors
 from . import transformers
 from . import bassmine
+from . import midiio
