@@ -216,7 +216,7 @@ def pitch2name(pitch, pitchNames):
     octaveLength = len(pitchNames)
     octave = int(pitch / octaveLength) - 1
     note = pitch % octaveLength
-    return pitchNames[note] + str(octave)
+    return str(pitchNames[note] + str(octave))
 
 
 def makeChord(root, chord_structure):

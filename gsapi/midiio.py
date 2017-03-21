@@ -6,6 +6,7 @@ from __future__ import absolute_import, division, print_function
 
 import logging
 import math
+import sys
 from pprint import pformat
 from struct import pack, unpack
 
@@ -13,6 +14,38 @@ midiioLog = logging.getLogger("gsapi.midiio")
 midiioLog.setLevel(level=logging.WARNING)
 
 DEFAULT_MIDI_HEADER_SIZE = 14
+
+if sys.version_info < (3,):
+
+    def write_midifile(midifile, pattern):
+        if type(midifile) in (str, unicode):
+            midifile = open(midifile, 'wb')
+        writer = FileWriter()
+        return writer.write(midifile, pattern)
+
+    def read_midifile(midifile):
+        if type(midifile) in (str, unicode):
+            midifile = open(midifile, 'rb')
+        reader = FileReader()
+        return reader.read(midifile)
+
+else:
+    import codecs
+
+    def b(x):
+        return codecs.latin_1_encode(x)[0]
+
+    def write_midifile(midifile, pattern):
+        if type(midifile) is str:
+            midifile = open(midifile, 'wb')
+        writer = FileWriter()
+        return writer.write(midifile, pattern)
+
+    def read_midifile(midifile):
+        if type(midifile) is str:
+            midifile = open(midifile, 'rb')
+        reader = FileReader()
+        return reader.read(midifile)
 
 
 class FileReader(object):
@@ -159,19 +192,6 @@ class FileWriter(object):
             raise(ValueError, "Unknown MIDI Event: " + str(event))
         return ret
 
-
-def write_midifile(midifile, pattern):
-    if type(midifile) in (str, unicode):
-        midifile = open(midifile, 'wb')
-    writer = FileWriter()
-    return writer.write(midifile, pattern)
-
-
-def read_midifile(midifile):
-    if type(midifile) in (str, unicode):
-        midifile = open(midifile, 'rb')
-    reader = FileReader()
-    return reader.read(midifile)
 
 
 # CONTAINERS

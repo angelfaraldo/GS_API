@@ -85,26 +85,26 @@ def __findTimeInfoFromMidi(myPattern, midiFile):
         gsioLog.info(myPattern.name + ": no timeSignature event found")
 
 
-def __findTagsFromName(name, noteMapping):
-    res = tuple()
-    for l in noteMapping:
-        if l in name:
-            res += [l]
-    return res
+# def __findTagsFromName(name, noteMapping):
+#     res = tuple()
+#     for l in noteMapping:
+#         if l in name:
+#             res += [l]
+#     return res
 
 
-def __findTagsFromPitchAndChannel(pitch, channel, noteMapping):
-    if "pitchNames" in noteMapping.keys():
-        return gsutil.pitch2name(pitch, noteMapping["pitchNames"])
-
-    res = tuple()
-    for l in noteMapping:
-        for le in noteMapping[l]:
-            if (le[0] in {"*", pitch}) and (le[1] in {"*", channel}):
-                res += (l,)
-    if len(res) == 1:
-        return res[0]
-    return res
+# def __findTagsFromPitchAndChannel(pitch, channel, noteMapping):
+#     if "pitchNames" in noteMapping.keys():
+#         return gsutil.pitch2name(pitch, noteMapping["pitchNames"])
+#
+#     res = tuple()
+#     for l in noteMapping:
+#         for le in noteMapping[l]:
+#             if (le[0] in {"*", pitch}) and (le[1] in {"*", channel}):
+#                 res += (l,)
+#     if len(res) == 1:
+#         return res[0]
+#     return res
 
 
 def __fromMidiFormatted(midiPath, noteToTagsMap, tracksToGet=None,
@@ -154,7 +154,12 @@ def __fromMidiFormatted(midiPath, noteToTagsMap, tracksToGet=None,
                             trackIdx, e.text))
 
                     if tagsFromTrackNameEvents:
-                        noteTag = __findTagsFromName(e.text, noteToTagsMap)
+                        #noteTag = __findTagsFromName(e.text, noteToTagsMap)
+                        noteTag = tuple()
+                        for l in noteToTagsMap:
+                            if l in e.text:
+                                noteTag += [l]
+
             if midiio.EndOfTrackEvent.is_event(e.statusmsg):
                 thisDuration = e.tick * tick_to_quarter_note
                 trackDuration = max(trackDuration,
@@ -173,8 +178,17 @@ def __fromMidiFormatted(midiPath, noteToTagsMap, tracksToGet=None,
                 if not noteTag:
                     if tagsFromTrackNameEvents:
                         continue
-                    noteTag = __findTagsFromPitchAndChannel(pitch, e.channel,
-                                                            noteToTagsMap)
+#                   # noteTag = __findTagsFromPitchAndChannel(pitch, e.channel, noteToTagsMap)
+                    if "pitchNames" in noteToTagsMap.keys(): # TODO ESTA LINEA
+                        noteTag = gsutil.pitch2name(pitch, noteToTagsMap["pitchNames"])
+                    else:
+                        noteTag = tuple()
+                        for l in noteToTagsMap:
+                            for le in noteToTagsMap[l]:
+                                if (le[0] in {"*", pitch}) and (le[1] in {"*", e.channel}):
+                                    noteTag += (l,)
+                        if len(noteTag) == 1:
+                            noteTag = noteTag[0]
                 if not noteTag:
                     if [e.channel, pitch] not in notFoundTags:
                         gsioLog.info(myPattern.name + ": no tags found for "
