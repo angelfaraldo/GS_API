@@ -249,7 +249,7 @@ class Pattern(object):
         self.name = name
         self.startTime = 0
         self.originPattern = None
-        # self.resolution = None # todo I've aded this from __findTimeInfo
+        self.resolution = None # todo I've aded this from __findTimeInfo
 
     def __eq__(self, other):
         if isinstance(other, Pattern):
@@ -606,8 +606,7 @@ class Pattern(object):
                 if subPattern:
                     viewpoint.events += [Event(duration=subPattern.duration,
                                                startTime=subPattern.startTime,
-                                               tag=descriptor.getDescriptorForPattern(
-                                                       subPattern),
+                                               tag=descriptor.getDescriptorForPattern(subPattern),
                                                originPattern=subPattern)]
 
             return viewpoint
@@ -674,7 +673,7 @@ class Pattern(object):
 
     def getLastNoteOff(self):
         """
-        Gets last event end time
+        Gets last event's end time
 
         Returns
         -------
@@ -858,30 +857,25 @@ class Pattern(object):
                 res.events += [newEv]
         return res
 
-    def quantize(self, stepSize, quantizeStartTime=True,
-                 quantizeDuration=True):
+    def quantize(self, stepSize=0.25, quantizeStartTime=True, quantizeDuration=True):
         """ Quantize events.
 
         Args:
             stepSize: the duration that we want to quantize to
-            quantizeDuration: do we quantize duration?
             quantizeStartTime: do we quantize startTimes
+            quantizeDuration: do we quantize duration?
         """
         beatDivision = 1.0 / stepSize
         if quantizeStartTime and quantizeDuration:
             for e in self.events:
-                e.startTime = int(
-                        e.startTime * beatDivision) * 1.0 / beatDivision
-                e.duration = int(
-                        e.duration * beatDivision) * 1.0 / beatDivision
+                e.startTime = int(e.startTime * beatDivision) * 1.0 / beatDivision
+                e.duration = int(e.duration * beatDivision) * 1.0 / beatDivision
         elif quantizeStartTime:
             for e in self.events:
-                e.startTime = int(
-                        e.startTime * beatDivision) * 1.0 / beatDivision
+                e.startTime = int(e.startTime * beatDivision) * 1.0 / beatDivision
         elif quantizeDuration:
             for e in self.events:
-                e.duration = int(
-                        e.duration * beatDivision) * 1.0 / beatDivision
+                e.duration = int(e.duration * beatDivision) * 1.0 / beatDivision
 
     def removeByTags(self, tags):
         """Remove all event(s) in a pattern with specified tag(s).
@@ -1041,6 +1035,7 @@ class Pattern(object):
         actual_duration = self.duration
         beats_per_bar = self.timeSignature[0]
         self.duration = math.ceil(actual_duration / beats_per_bar) * beats_per_bar
+        # self.addEvent(Event(self.getLastNoteOff(), self.duration - self.getLastNoteOff(), 0, 0,'silence'))
 
     def splitInEqualLengthPatterns(self, desiredLength, viewpointName=None,
                                    makeCopy=True, supressEmptyPattern=True):

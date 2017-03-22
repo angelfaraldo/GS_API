@@ -362,21 +362,20 @@ def toMidi(myPattern, midiMap=gsdefs.noteMap, folderPath="./", name=None):
     for e in myPattern.events:
         startTick = int(beatToTick * e.startTime)
         endTick = int(beatToTick * e.getEndTime())
-        # pitch = e.pitch
         channel = 1
         if isinstance(midiMap, tuple):
-            pitch = midiMap[e.tag[0]] # provided a key return pitch value
+            pitch = midiMap[e.tag[0]]
         elif isinstance(midiMap, collections.Hashable):
             pitch = midiMap[e.tag]
-        #elif midiMap is None: # todo: confirm that this condition sobra!
-         #   pitch = e.pitch
         else:
-            pitch = e.pitch  # todo esto lo he movido de más arriba!
+            pitch = e.pitch
         track.append(midiio.NoteOnEvent(tick=startTick, velocity=e.velocity, pitch=pitch, channel=channel))
         track.append(midiio.NoteOffEvent(tick=endTick, velocity=e.velocity, pitch=pitch, channel=channel))
 
+        midiio.EndOfTrackEvent()
+
     track.append(midiio.EndOfTrackEvent(tick=int(myPattern.duration * beatToTick)))
-    print(myPattern.duration)
+    print('beattoto', int(myPattern.duration * beatToTick))
 
     # make tick relatives
     track.sort(key=lambda e: e.tick)
