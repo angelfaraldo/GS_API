@@ -327,7 +327,7 @@ def fromMidiCollection(midiGlobPath, noteToTagsMap=gsdefs.defaultPitchNames,
     return res
 
 
-def toMidi(myPattern, midiMap=gsdefs.noteMap, folderPath="./", name=None):
+def toMidi(myPattern, midiMap=gsdefs.noteMap, folderPath="../output", name=None):
     """
     Function to write a Pattern to a MIDI file.
 
