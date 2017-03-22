@@ -9,9 +9,9 @@ import sys
 if __name__ == '__main__':
     sys.path.insert(1, os.path.abspath(os.path.join(__file__, os.pardir, os.pardir, os.pardir)))
 
-from .descriptors.density import Density
-from .descriptors.number_of_tags import NumberOfTags
-from .gsdataset import Dataset
+from gsapi.descriptors.density import Density
+from gsapi.descriptors.number_of_tags import NumberOfTags
+from gsapi.gsdataset import Dataset
 
 class DensityDrumSpace:
         # #Descriptor1: number of instruments

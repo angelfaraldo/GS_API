@@ -16,8 +16,6 @@ import math
 import os
 import sys
 
-
-
 from . import gsdefs, gspattern, gsutil, midiio
 
 if sys.version_info >= (3, 0):
@@ -43,7 +41,7 @@ def __formatNoteToTags(_noteToTags):
     for n in noteToTags:
         if n == "pitchNames":
             if not noteToTags["pitchNames"]:
-                noteToTags["pitchNames"] = gsdefs.pitchNames
+                noteToTags["pitchNames"] = gsdefs.defaultPitchNames
         else:
             if not isinstance(noteToTags[n], list):
                 noteToTags[n] = [noteToTags[n]]
@@ -149,12 +147,11 @@ def __fromMidiFormatted(midiPath, noteToTagsMap, tracksToGet=None,
                         shouldSkipTrack = True
                         continue
                     else:
-                        gsioLog.info(
-                            myPattern.name + ": getting track: %i %s" % (
-                            trackIdx, e.text))
+                        gsioLog.info(myPattern.name + ": getting track: %i %s" % (trackIdx, e.text))
 
+                    # find tags from track names
+                    # ==========================
                     if tagsFromTrackNameEvents:
-                        #noteTag = __findTagsFromName(e.text, noteToTagsMap)
                         noteTag = tuple()
                         for l in noteToTagsMap:
                             if l in e.text:
@@ -162,8 +159,7 @@ def __fromMidiFormatted(midiPath, noteToTagsMap, tracksToGet=None,
 
             if midiio.EndOfTrackEvent.is_event(e.statusmsg):
                 thisDuration = e.tick * tick_to_quarter_note
-                trackDuration = max(trackDuration,
-                                    thisDuration) if trackDuration else thisDuration
+                trackDuration = max(trackDuration, thisDuration) if trackDuration else thisDuration
                 continue
             isNoteOn = midiio.NoteOnEvent.is_event(e.statusmsg)
             isNoteOff = midiio.NoteOffEvent.is_event(e.statusmsg)
@@ -178,7 +174,9 @@ def __fromMidiFormatted(midiPath, noteToTagsMap, tracksToGet=None,
                 if not noteTag:
                     if tagsFromTrackNameEvents:
                         continue
-#                   # noteTag = __findTagsFromPitchAndChannel(pitch, e.channel, noteToTagsMap)
+
+                    # findTagsFromPitchAndChannel:
+                    # ===========================
                     if "pitchNames" in noteToTagsMap.keys(): # TODO ESTA LINEA
                         noteTag = gsutil.pitch2name(pitch, noteToTagsMap["pitchNames"])
                     else:
@@ -238,9 +236,10 @@ def __fromMidiFormatted(midiPath, noteToTagsMap, tracksToGet=None,
 # MIDI
 # =============================================================================
 
-def fromMidi(midiFile, noteToTagsMap=gsdefs.pitchNames, tracksToGet=None,
+def fromMidi(midiFile, noteToTagsMap="pitchNames", tracksToGet=None,
              tagsFromTrackNameEvents=False, filterOutNotMapped=True,
              checkForOverlapped=False):
+    # TODO: tagsFromTrackNameEvents=True returns an eventless pattern!
     """
     Loads a MIDI file as a pattern.
 
@@ -286,7 +285,7 @@ def fromMidi(midiFile, noteToTagsMap=gsdefs.pitchNames, tracksToGet=None,
                                checkForOverlapped=checkForOverlapped)
 
 
-def fromMidiCollection(midiGlobPath, noteToTagsMap=gsdefs.pitchNames,
+def fromMidiCollection(midiGlobPath, noteToTagsMap=gsdefs.defaultPitchNames,
                        tracksToGet=None, tagsFromTrackNameEvents=False,
                        filterOutNotMapped=True, desiredLength=0):
     """
@@ -360,25 +359,24 @@ def toMidi(myPattern, midiMap=gsdefs.noteMap, folderPath="./", name=None):
     # Append the track to the pattern
     pattern.append(track)
     beatToTick = pattern.resolution
-    for evt in myPattern.events:
-        startTick = int(beatToTick * evt.startTime)
-        endTick = int(beatToTick * evt.getEndTime())
+    for e in myPattern.events:
+        startTick = int(beatToTick * e.startTime)
+        endTick = int(beatToTick * e.getEndTime())
         # pitch = e.pitch
         channel = 1
         if isinstance(midiMap, tuple):
-            pitch = midiMap[evt.tag[0]] # provided a key return pitch value
+            pitch = midiMap[e.tag[0]] # provided a key return pitch value
         elif isinstance(midiMap, collections.Hashable):
-            pitch = midiMap[evt.tag]
+            pitch = midiMap[e.tag]
         #elif midiMap is None: # todo: confirm that this condition sobra!
-         #   pitch = evt.pitch
+         #   pitch = e.pitch
         else:
-            pitch = evt.pitch  # todo esto lo he movido de más arriba!
-        track.append(midiio.NoteOnEvent(tick=startTick, velocity=evt.velocity,
-                                          pitch=pitch, channel=channel))
-        track.append(midiio.NoteOffEvent(tick=endTick, velocity=evt.velocity,
-                                           pitch=pitch, channel=channel))
+            pitch = e.pitch  # todo esto lo he movido de más arriba!
+        track.append(midiio.NoteOnEvent(tick=startTick, velocity=e.velocity, pitch=pitch, channel=channel))
+        track.append(midiio.NoteOffEvent(tick=endTick, velocity=e.velocity, pitch=pitch, channel=channel))
 
     track.append(midiio.EndOfTrackEvent(tick=int(myPattern.duration * beatToTick)))
+    print(myPattern.duration)
 
     # make tick relatives
     track.sort(key=lambda e: e.tick)

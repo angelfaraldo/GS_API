@@ -44,7 +44,7 @@ class Event(object):
 
     """
     def __init__(self, startTime=0, duration=1, pitch=60, velocity=80,
-                 tag=None, originPattern=None):
+                 tag=(), originPattern=None):
 
         self.startTime = startTime
         self.duration = duration
@@ -52,13 +52,14 @@ class Event(object):
         self.velocity = velocity
         self.originPattern = originPattern
 
-        if not tag:
-            self.tag = ()
+        #if not tag:
+        #    self.tag = () # since it is assigning a tuple,
+        # i'll do it in the initialization instead of 'None'
         if isinstance(tag, list):
-            gspatternLog.error("'tag' can't be a list, converting to tuple")
+            gspatternLog.error("'tag' can't be a list, converting to tuple.")
             self.tag = tuple(tag)
         elif not isinstance(tag, collections.Hashable):
-            gspatternLog.error("'tag' has to be hashable, trying conversion to tuple")
+            gspatternLog.error("'tag' has to be hashable, trying conversion to tuple.")
             self.tag = (tag,)
         else:
             self.tag = tag
@@ -234,7 +235,7 @@ class Pattern(object):
 
     """
     def __init__(self, duration=0, events=None, bpm=120, timeSignature=(4, 4),
-                 key="unknown",  originFilePath=None, name="untitled"):
+                 key="",  originFilePath=None, name="untitled"):
         self.duration = duration
         if events:
             self.events = events
@@ -285,9 +286,12 @@ class Pattern(object):
         '[tag] pitch velocity startTime duration'
 
         """
-        s = "Name: %s, Duration: %.2f, BPM: %.2f, " \
-            "TimeSignature: %i/%i, Key: %s\n" \
-            "FilePath: %s\n" % (
+        s = "Name: %s\n" \
+            "Duration: %.2f\n" \
+            "BPM: %.2f\n" \
+            "TimeSignature: %i/%i\n" \
+            "Key: %s\n" \
+            "FilePath: %s\n\n" % (
             self.name,
             self.duration,
             self.bpm,
@@ -1019,6 +1023,25 @@ class Pattern(object):
         if total and (total > self.duration or not onlyIfBigger):
             self.duration = total
 
+    def setDurationToCompleteBars(self):
+        """Sets duration to last event NoteOff
+
+        Parameters
+        ----------
+        onlyIfBigger: bool
+            update duration only if last Note off is bigger
+
+        Notes
+        -----
+        If inner events have a bigger time span than self.duration,
+        increase the duration to fit.
+
+        """
+        # TODO: get time signature from pattern and operate from there
+        actual_duration = self.duration
+        beats_per_bar = self.timeSignature[0]
+        self.duration = math.ceil(actual_duration / beats_per_bar) * beats_per_bar
+
     def splitInEqualLengthPatterns(self, desiredLength, viewpointName=None,
                                    makeCopy=True, supressEmptyPattern=True):
         """Splits a pattern in consecutive equal length cuts.
@@ -1140,7 +1163,8 @@ class Pattern(object):
         """
         for e in self.events:
             e.pitch += interval
-            e.tag = [gsutil.pitch2name(e.pitch, gsdefs.pitchNames)]
+            e.tag = [gsutil.pitch2name(e.pitch, gsdefs.defaultPitchNames)]
+
 
 def patternToList(myPattern):
     """

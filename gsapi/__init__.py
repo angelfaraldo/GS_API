@@ -9,8 +9,6 @@ from . import gsutil
 from . import gsdefs
 from . import gspattern
 from . import gsdataset
-# from .gspattern import Event, Pattern
-# from .gsdataset import Dataset
 from . import gsio
 from . import extractors
 from . import styles

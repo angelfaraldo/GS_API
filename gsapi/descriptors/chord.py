@@ -71,9 +71,9 @@ class Chord(BaseDescriptor):
         bestScore = findBestScoreForProfiles(chromas, profileToConsider, penalityWeight=pattern.duration / 2.0,
                                              allowDuplicates=self.allowDuplicates)
         if self.allowDuplicates:
-            return [ChordTag((gsdefs.pitchNames[x[0]], x[1])) for x in bestScore]
+            return [ChordTag((gsdefs.defaultPitchNames[x[0]], x[1])) for x in bestScore]
         else:
-            return ChordTag((gsdefs.pitchNames[bestScore[0]], bestScore[1]))
+            return ChordTag((gsdefs.defaultPitchNames[bestScore[0]], bestScore[1]))
 
 
 def findBestScoreForProfiles(chromas, pitchProfileDict, penalityWeight, allowDuplicates=False):
