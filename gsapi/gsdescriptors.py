@@ -3,17 +3,126 @@
 
 from __future__ import absolute_import, division, print_function
 
-from .base_descriptor import *
-from .density import Density
-from .. import gsdefs
+from math import ceil
+
+from . import gsdefs
 
 
-def intervalListToProfile(intervalList, length=12):
-    profile = [-1] * length
-    profile[0] = 1
-    for e in intervalList:
-        profile[e % length] = 0.8
-    return profile
+class BaseDescriptor(object):
+    def __init__(self):
+        self.type = "descriptor"
+
+    def configure(self, paramDict):
+        """
+        Configure the current descriptor mapping dict to parameters.
+
+        """
+        raise NotImplementedError("Not Implemented.")
+
+    def getDescriptorForPattern(self, pattern):
+        """
+        Compute a unique value for a given pattern.
+        It can be a sliced part of a bigger one.
+
+        """
+        raise NotImplementedError("Not Implemented.")
+
+
+class Density(BaseDescriptor):
+    def __init__(self, ignoredTags=None, includedTags=None):
+        BaseDescriptor.__init__(self)
+        self.ignoredTags = ignoredTags or ["silence"]
+        self.includedTags = includedTags
+
+    def configure(self, paramDict):
+        """
+        Configure current descriptor mapping dict to parameters.
+
+        """
+        raise NotImplementedError("Not Implemented.")
+
+    def getDescriptorForPattern(self, pattern):
+        density = 0
+        _checkedPattern = pattern.getPatternWithoutTags(tagToLookFor=self.ignoredTags)
+        if self.includedTags:
+            _checkedPattern = _checkedPattern.getPatternWithTags(tagToLookFor=self.includedTags, makeCopy=False)
+        for e in _checkedPattern.events:
+            density += e.duration
+        return density
+
+
+class NumberOfTags(BaseDescriptor):
+    """
+    Calculates the number of tags in a given Pattern.
+
+    """
+
+    def __init__(self, ignoredTags=None, includedTags=None):
+        BaseDescriptor.__init__(self)
+        self.ignoredTags = ignoredTags or ["silence"]
+        self.includedTags = includedTags
+
+    def configure(self, paramDict):
+        """
+        Configure current descriptor mapping dict to parameters.
+
+        """
+        raise NotImplementedError("Not Implemented.")
+
+    def getDescriptorForPattern(self, pattern):
+        _checkedPattern = pattern.getPatternWithoutTags(tagToLookFor=self.ignoredTags)
+        if self.includedTags:
+            _checkedPattern = _checkedPattern.getPatternWithTags(tagToLookFor=self.includedTags, makeCopy=False)
+        return len(_checkedPattern.getAllTags())
+
+
+class Syncopation(BaseDescriptor):
+    """
+    Computes the syncopation value of a pattern.
+
+    """
+
+    def __init__(self):
+        BaseDescriptor.__init__(self)
+        self.weights = []
+        self.noteGrid = []
+        self.duration = 1
+
+    def configure(self, paramDict):
+        """
+        Configure current descriptor mapping dict to parameters.
+
+        """
+        raise NotImplementedError("Not Implemented.")
+
+    def __buildSyncopationWeight(self):
+        depth = 1
+        self.weights = [0] * int(self.duration)
+        thresh = 0
+        stepWidth = int(self.duration * 1.0 / depth)
+        while stepWidth > thresh:
+            for s in range(depth):
+                self.weights[s * stepWidth] += 1
+            depth *= 2
+            stepWidth = int(self.duration * 1.0 / depth)
+
+    def __buildBinarizedGrid(self, pattern):
+        self.noteGrid = [0] * self.duration
+        for i in range(self.duration):
+            self.noteGrid[i] = len(pattern.getActiveEventsAtTime(i))
+
+    def getDescriptorForPattern(self, pattern):
+        self.duration = int(ceil(pattern.duration))
+        if not self.weights or (self.duration != len(self.weights)):
+            self.__buildSyncopationWeight()
+        syncopation = 0
+
+        self.__buildBinarizedGrid(pattern)
+        for t in range(self.duration):
+            nextT = (t + 1) % self.duration
+            if self.noteGrid[t] and not self.noteGrid[nextT]:
+                syncopation += abs(self.weights[nextT] - self.weights[t])
+        return syncopation
 
 
 class ChordTag(tuple):
@@ -74,6 +183,17 @@ class Chord(BaseDescriptor):
             return [ChordTag((gsdefs.defaultPitchNames[x[0]], x[1])) for x in bestScore]
         else:
             return ChordTag((gsdefs.defaultPitchNames[bestScore[0]], bestScore[1]))
+
+
+
+### SOME NEEDED FUNCTIONS!
+
+def intervalListToProfile(intervalList, length=12):
+    profile = [-1] * length
+    profile[0] = 1
+    for e in intervalList:
+        profile[e % length] = 0.8
+    return profile
 
 
 def findBestScoreForProfiles(chromas, pitchProfileDict, penalityWeight, allowDuplicates=False):

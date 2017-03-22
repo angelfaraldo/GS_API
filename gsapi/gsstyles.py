@@ -1,16 +1,175 @@
-# !/usr/bin/env python
-# encoding: utf-8
-
 from __future__ import absolute_import, division, print_function
-
-from .base_style import *
-from .. import gspattern
 
 import copy
 import logging
 import random
 
+from .gspattern import Pattern
+
 markovLog = logging.getLogger('gsapi.styles.markov_style')
+# todo change this to fit the new reorganisation!
+
+
+class BaseStyle(object):
+    """
+    Base class to define a style.
+
+    Such class needs to provide the following methods:
+        - generateStyle(self, PatternClasses)
+        - generatePattern(self, seed=None)
+        - getDistanceFromStyle(self, Pattern)
+        - getClosestPattern(self, Pattern, seed=None)
+        - getInterpolated(self, PatternA, PatternB, distanceFromA, seed=None)
+        - getInternalState(self)
+        - loadInternalState(self, internalStateDict)
+        - isBuilt(self)
+
+    """
+    def __init__(self):
+        self.type = "style"
+
+    def generateStyle(self, PatternClasses):
+        """
+        Computes inner state of style based on a list of patterns.
+
+        """
+        raise NotImplementedError("Not Implemented.")
+
+    def generatePattern(self, seed=None):
+        """
+        Generates a new random pattern using a seed if not "None".
+        Ideally same seed should lead to same pattern.
+
+        """
+        raise NotImplementedError("Not Implemented.")
+
+    def getDistanceFromStyle(self, Pattern):
+        """
+        Returns a normalized value representing the 'styleness' of a pattern.
+        1 represents the farthest from the style, 0 the closest.
+
+        """
+        raise NotImplementedError("Not Implemented.")
+
+    def getClosestPattern(self, Pattern, seed=None):
+        """
+        Returns the closest pattern in this style.
+
+        """
+        raise NotImplementedError("Not Implemented.")
+
+    def getInterpolated(self, PatternA, PatternB, distanceFromA, seed=0):
+        """
+        Interpolates between two patterns given this style constraints.
+
+        """
+        raise NotImplementedError("Not Implemented.")
+
+    def getInternalState(self):
+        """
+        Returns a dict representing the current internal state.
+
+        """
+        raise NotImplementedError("Not Implemented.")
+
+    def setInternalState(self, internalStateDict):
+        """
+        Loads internal state from a given dict.
+
+        """
+        raise NotImplementedError("Not Implemented.")
+
+    def isBuilt(self):
+        """
+        Returns True if the style has been correctly build.
+
+        """
+        raise NotImplementedError("Not Implemented.")
+
+    def saveToJSON(self, filePath):
+        import json
+        state = self.getInternalState()
+        with open(filePath, 'w') as f:
+            json.dump(state, f)
+
+    def loadFromJSON(self, filePath):
+        import json
+        with open(filePath, 'r') as f:
+            state = json.load(f)
+        if state:
+            self.setInternalState(state)
+
+    def saveToPickle(self, filePath):
+        import sys
+        if sys.version_info >= (3, 0):
+            import pickle
+        else:
+            import cPickle as pickle
+        pickle.dump(self, filePath)
+
+    def loadFromPickle(self, filePath):
+        import sys
+        if sys.version_info >= (3, 0):
+            import pickle
+        else:
+            import cPickle as pickle
+        self = pickle.load(filePath)
+
+
+class DatabaseStyle(BaseStyle):
+    """
+    A database based style. It generates patterns from already existing patterns
+
+    Parameter
+    ---------
+    generatePatternOrdering: {'indexed', 'increasing', 'random'}
+        Defines the generatePattern behaviour.
+
+    """
+
+    def __init__(self, generatePatternOrdering="indexed"):
+        self.generatePatternOrdering = generatePatternOrdering
+        self.patternList = []
+        self.currentIdx = 0
+
+    def generateStyle(self, PatternClasses):
+        self.patternList = PatternClasses
+
+    def generatePattern(self, seed=None):
+        if self.generatePatternOrdering == 'increasing':
+            p = self.patternList[self.currentIdx]
+            self.currentIdx += 1
+            print("reading", self.currentIdx)
+            return p
+        elif self.generatePatternOrdering == 'random':
+            return self.patternList[int(random.random() * len(self.patternList))]
+        elif self.generatePatternOrdering == 'indexed':
+            return self.patternList[self.currentIdx]
+
+    def getDistanceFromStyle(self, pattern):
+        raise NotImplementedError("Should have implemented this")
+
+    def getClosestPattern(self, pattern, seed=0):
+        raise NotImplementedError("Should have implemented this")
+
+    def getInterpolated(self, patternA, patternB, distanceFromA, seed=0):
+        raise NotImplementedError("Should have implemented this")
+
+    def getInternalState(self):
+        res = {"patternList": []}
+        for e in self.patternList:
+            res["patternList"] += [e.toJSONDict()]
+        return res
+
+    def setInternalState(self, internalStateDict):
+        self.patternList = []
+        for e in internalStateDict["patternList"]:
+            p = Pattern()
+            p.fromJSONDict(e)
+            self.patternList += [p]
+
+    def isBuilt(self):
+        self.patternList != []
 
 
 class MarkovStyle(BaseStyle):
@@ -25,6 +184,7 @@ class MarkovStyle(BaseStyle):
         number of steps to consider (binarization of pattern).
 
     """
+
     def __init__(self, order=2, numSteps=16, loopDuration=4):
         # BaseStyle.__init__(self)
         # self.type = "Style"
@@ -71,7 +231,7 @@ class MarkovStyle(BaseStyle):
 
     def getLastEvents(self, pattern, step, num, stepSize):
         events = []
-        for i in reversed(range(1, num+1)):
+        for i in reversed(range(1, num + 1)):
             idx = step - i * stepSize
             if idx < 0:
                 idx += pattern.duration
@@ -447,7 +607,7 @@ class PatternMarkov(object):
     def plotMatrixAtStep(self, step):
         if step < 0: step += len(self.transitionTable)
         mat, labelsIn, labelsOut = self.getMatrixAtStep(
-            step)  # ,possibleStates = allTags)
+                step)  # ,possibleStates = allTags)
         self.__plotMatrix(mat, labelsIn, labelsOut)
 
     def plotGlobalMatrix(self):
@@ -466,3 +626,7 @@ class PatternMarkov(object):
                                  possibleStatesOut=possibleStatesOut,
                                  matrix=matrix)
         self.__plotMatrix(matrix, possibleStatesIn, possibleStatesOut)
+
+
+
+

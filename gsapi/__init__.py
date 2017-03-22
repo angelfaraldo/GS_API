@@ -10,9 +10,9 @@ from . import gsdefs
 from . import gspattern
 from . import gsdataset
 from . import gsio
-from . import extractors
-from . import styles
-from . import descriptors
-from . import transformers
+from . import gsextractors
+from . import gsstyles
+from . import gsdescriptors
+from . import gstransformers
 from . import bassmine
 from . import midiio

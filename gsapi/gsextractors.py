@@ -6,12 +6,10 @@ from __future__ import absolute_import, division, print_function
 import os
 import sys
 
-if __name__ == '__main__':
-    sys.path.insert(1, os.path.abspath(os.path.join(__file__, os.pardir, os.pardir, os.pardir)))
-
 from gsapi.descriptors.density import Density
 from gsapi.descriptors.number_of_tags import NumberOfTags
 from gsapi.gsdataset import Dataset
+
 
 class DensityDrumSpace:
         # #Descriptor1: number of instruments
