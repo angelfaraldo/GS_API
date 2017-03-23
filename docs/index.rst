@@ -9,6 +9,7 @@ gsapi's documentation
 Contents:
 
 .. toctree::
+
     :maxdepth: 2
     README
     gsapi
