@@ -16,12 +16,13 @@ import math
 import os
 import sys
 
-from . import gsdefs, gspattern, gsutil, midiio
-
 if sys.version_info >= (3, 0):
     import pickle
 else:
     import cPickle as pickle
+
+from . import gsdefs, gspattern, gsutil, midiio
+
 
 gsioLog = logging.getLogger("gsapi.gsio")
 gsioLog.setLevel(level=logging.WARNING)
@@ -51,58 +52,76 @@ def __formatNoteToTags(_noteToTags):
     return noteToTags
 
 
-def __findTimeInfoFromMidi(myPattern, midiFile):
+def __keyToMidiFormat(keyString):
+    mode = 0
+    if 'm' in keyString:
+        keyString = keyString[:-1]
+        mode = 1
+    tonic = gsdefs.midiKey.keys()[gsdefs.midiKey.values().index(keyString)]
+    return tonic, mode
+
+
+def __findMetaFromMidi(myPattern, midiFile):
     foundTimeSignatureEvent = False
     foundTempo = False
+    foundKey = False
     myPattern.timeSignature = (4, 4)
     myPattern.bpm = 120
-    # hide it in myPattern to be able to retrieve it when exporting
+    myPattern.key = ""
     myPattern.resolution = midiFile.resolution
 
     for tracks in midiFile:
         for e in tracks:
             if midiio.MetaEvent.is_event(e.statusmsg):
                 if e.metacommand == midiio.TimeSignatureEvent.metacommand:
-                    if foundTimeSignatureEvent and (
-                                myPattern.timeSignature != (
-                                    e.numerator, e.denominator)):
-                        gsioLog.error(myPattern.name + ": multiple time "
-                                                       "signature found, not supported, "
-                                                       "result can be altered")
+                    if foundTimeSignatureEvent and (myPattern.timeSignature != (e.numerator, e.denominator)):
+                        gsioLog.error(myPattern.name + ": multiple timeSignature found, not supported.")
                     foundTimeSignatureEvent = True
                     myPattern.timeSignature = (e.numerator, e.denominator)
                 elif e.metacommand == midiio.SetTempoEvent.metacommand:
                     if foundTempo:
-                        gsioLog.error(myPattern.name + ": multiple bpm found, not supported")
+                        gsioLog.error(myPattern.name + ": multiple bpm found, not supported.")
                     foundTempo = True
                     myPattern.bpm = e.bpm
+                elif e.metacommand == midiio.KeySignatureEvent.metacommand:
+                    if foundKey:
+                        gsioLog.error(myPattern.name + ": multiple key found, not supported.")
+                    foundKey = True
+                    keyName = gsdefs.midiKey[e.alternatives]
+                    if e.minor == 1:
+                        keyName += "m"
+                    myPattern.key = keyName
 
-        if foundTimeSignatureEvent:
-            break
+        #if foundTimeSignatureEvent:
+        #    break
     if not foundTimeSignatureEvent:
-        gsioLog.info(myPattern.name + ": no timeSignature event found")
+        gsioLog.info(myPattern.name + ": no Time Signature event found.")
+    if not foundTempo:
+        gsioLog.info(myPattern.name + ": no Tempo event found.")
+    if not foundKey:
+        gsioLog.info(myPattern.name + ": no Key event found.")
 
 
-# def __findTagsFromName(name, noteMapping):
-#     res = tuple()
-#     for l in noteMapping:
-#         if l in name:
-#             res += [l]
-#     return res
+def __findTagsFromName(name, noteMapping):
+    res = tuple()
+    for l in noteMapping:
+        if l in name:
+            res += [l]
+    return res
 
 
-# def __findTagsFromPitchAndChannel(pitch, channel, noteMapping):
-#     if "pitchNames" in noteMapping.keys():
-#         return gsutil.pitch2name(pitch, noteMapping["pitchNames"])
-#
-#     res = tuple()
-#     for l in noteMapping:
-#         for le in noteMapping[l]:
-#             if (le[0] in {"*", pitch}) and (le[1] in {"*", channel}):
-#                 res += (l,)
-#     if len(res) == 1:
-#         return res[0]
-#     return res
+def __findTagsFromPitchAndChannel(pitch, channel, noteMapping):
+    if "pitchNames" in noteMapping.keys():
+        return gsutil.pitch2name(pitch, noteMapping["pitchNames"])
+
+    res = tuple()
+    for l in noteMapping:
+        for le in noteMapping[l]:
+            if (le[0] in {"*", pitch}) and (le[1] in {"*", channel}):
+                res += (l,)
+    if len(res) == 1:
+        return res[0]
+    return res
 
 
 def __fromMidiFormatted(midiPath, noteToTagsMap, tracksToGet=None,
@@ -123,7 +142,7 @@ def __fromMidiFormatted(midiPath, noteToTagsMap, tracksToGet=None,
 
     # get time signature first
     gsioLog.info("start processing %s" % myPattern.name)
-    __findTimeInfoFromMidi(myPattern, globalMidi)
+    __findMetaFromMidi(myPattern, globalMidi)
 
     tick_to_quarter_note = 1.0 / globalMidi.resolution
     myPattern.events = []
@@ -149,13 +168,12 @@ def __fromMidiFormatted(midiPath, noteToTagsMap, tracksToGet=None,
                     else:
                         gsioLog.info(myPattern.name + ": getting track: %i %s" % (trackIdx, e.text))
 
-                    # find tags from track names
-                    # ==========================
                     if tagsFromTrackNameEvents:
-                        noteTag = tuple()
-                        for l in noteToTagsMap:
-                            if l in e.text:
-                                noteTag += [l]
+                        noteTag = __findTagsFromName(e.text, noteToTagsMap)
+                        # noteTag = tuple()
+                        # for l in noteToTagsMap:
+                        #     if l in e.text:
+                        #         noteTag += [l]
 
             if midiio.EndOfTrackEvent.is_event(e.statusmsg):
                 thisDuration = e.tick * tick_to_quarter_note
@@ -174,24 +192,24 @@ def __fromMidiFormatted(midiPath, noteToTagsMap, tracksToGet=None,
                 if not noteTag:
                     if tagsFromTrackNameEvents:
                         continue
-
+                    noteTag = __findTagsFromPitchAndChannel(pitch, e.channel, noteToTagsMap)
                     # findTagsFromPitchAndChannel:
                     # ===========================
-                    if "pitchNames" in noteToTagsMap.keys(): # TODO ESTA LINEA
-                        noteTag = gsutil.pitch2name(pitch, noteToTagsMap["pitchNames"])
-                    else:
-                        noteTag = tuple()
-                        for l in noteToTagsMap:
-                            for le in noteToTagsMap[l]:
-                                if (le[0] in {"*", pitch}) and (le[1] in {"*", e.channel}):
-                                    noteTag += (l,)
-                        if len(noteTag) == 1:
-                            noteTag = noteTag[0]
+                    # if "pitchNames" in noteToTagsMap.keys():
+                    #     noteTag = gsutil.pitch2name(pitch, noteToTagsMap["pitchNames"])
+                    # else:
+                    #     noteTag = tuple()
+                    #     for l in noteToTagsMap:
+                    #         for le in noteToTagsMap[l]:
+                    #             if (le[0] in {"*", pitch}) and (le[1] in {"*", e.channel}):
+                    #                 noteTag += (l,)
+                    #     if len(noteTag) == 1:
+                    #         noteTag = noteTag[0]
                 if not noteTag:
                     if [e.channel, pitch] not in notFoundTags:
-                        gsioLog.info(myPattern.name + ": no tags found for "
-                                                      "pitch %d on channel %d" % (
-                                     pitch, e.channel))
+                        gsioLog.info(myPattern.name +
+                                     ": no tags found for pitch %d on channel %d"
+                                     % (pitch, e.channel))
                         notFoundTags += [[e.channel, pitch]]
                     if filterOutNotMapped:
                         continue
@@ -327,13 +345,13 @@ def fromMidiCollection(midiGlobPath, noteToTagsMap=gsdefs.defaultPitchNames,
     return res
 
 
-def toMidi(myPattern, midiMap=gsdefs.noteMap, folderPath="../output", name=None):
+def toMidi(myPattern, midiMap=None, folderPath="./output/", name=None):
     """
     Function to write a Pattern to a MIDI file.
 
     Parameters
     ----------
-    myPattern: str
+    myPattern: Pattern
         A reference to a Pattern
     midiMap: dict
         mapping used to translate tags to MIDI pitch.
@@ -344,17 +362,21 @@ def toMidi(myPattern, midiMap=gsdefs.noteMap, folderPath="../output", name=None)
         name of the file to write to.
     """
 
-    # Instantiate a MIDI Pattern (contains a list of tracks)
+    # Instantiate a MIDI myPattern (contains a list of tracks)
     pattern = midiio.Pattern(tick_relative=False, frmt=1)
     pattern.resolution = getattr(myPattern, 'resolution', 960)
 
     # Instantiate a MIDI track (contains a list of MIDI events)
     track = midiio.Track(tick_relative=False)
 
+    # Write Metadata
     track.append(midiio.TimeSignatureEvent(numerator=myPattern.timeSignature[0],
-                                         denominator=myPattern.timeSignature[1]))
+                                           denominator=myPattern.timeSignature[1]))
     track.append(midiio.TrackNameEvent(text=myPattern.name))
     track.append(midiio.SetTempoEvent(bpm=myPattern.bpm))
+    if myPattern.key:
+        keyTuple = __keyToMidiFormat(myPattern.key)
+        track.append(midiio.KeySignatureEvent(alternatives=keyTuple[0], minor=keyTuple[1]))
 
     # Append the track to the pattern
     pattern.append(track)
@@ -372,10 +394,8 @@ def toMidi(myPattern, midiMap=gsdefs.noteMap, folderPath="../output", name=None)
         track.append(midiio.NoteOnEvent(tick=startTick, velocity=e.velocity, pitch=pitch, channel=channel))
         track.append(midiio.NoteOffEvent(tick=endTick, velocity=e.velocity, pitch=pitch, channel=channel))
 
-        midiio.EndOfTrackEvent()
-
+    # and the "End of Track" Event
     track.append(midiio.EndOfTrackEvent(tick=int(myPattern.duration * beatToTick)))
-    print('beattoto', int(myPattern.duration * beatToTick))
 
     # make tick relatives
     track.sort(key=lambda e: e.tick)

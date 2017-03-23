@@ -232,10 +232,14 @@ class Pattern(object):
         startTime of pattern (useful when splitting in sub patterns).
      viewPoints: dict
         dict of ViewPoints
+    key: str
+        The key of the pattern
+    name: str
+        A name given to the pattern
 
     """
     def __init__(self, duration=0, events=None, bpm=120, timeSignature=(4, 4),
-                 key="",  originFilePath=None, name="untitled"):
+                 key=None,  originFilePath=None, name=None):
         self.duration = duration
         if events:
             self.events = events
@@ -249,7 +253,7 @@ class Pattern(object):
         self.name = name
         self.startTime = 0
         self.originPattern = None
-        self.resolution = None # todo I've aded this from __findTimeInfo
+        self.resolution = None
 
     def __eq__(self, other):
         if isinstance(other, Pattern):

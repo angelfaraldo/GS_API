@@ -157,6 +157,22 @@ verySimpleDrumMap = {"Kick":     36,
                      "ClosedHH": 42,
                      "OpenHH":   46}
 
+midiKey = {-7: 'Cb',
+           -6: 'Gb',
+           -5: 'Db',
+           -4: 'Ab',
+           -3: 'Eb',
+           -2: 'Bb',
+           -1: 'F',
+           0: 'C',
+           1: 'G',
+           2: 'D',
+           3: 'A',
+           4: 'E',
+           5: 'B',
+           6: 'F#',
+           7: 'C#'}
+
 noteMap= {"c-1":   0,
           "c#-1":  1,
           "d-1":   2,

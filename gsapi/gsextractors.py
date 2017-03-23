@@ -6,9 +6,8 @@ from __future__ import absolute_import, division, print_function
 import os
 import sys
 
-from gsapi.descriptors.density import Density
-from gsapi.descriptors.number_of_tags import NumberOfTags
-from gsapi.gsdataset import Dataset
+from .gsdescriptors import Density, NumberOfTags
+from .gsdataset import Dataset
 
 
 class DensityDrumSpace:
