@@ -298,7 +298,7 @@ class Chordify(BaseTransformer):
         for e in self.inputPattern:
             if e.startTime != p:
                 new_chord = EventChord(startTime=e.startTime, duration=e.duration, components=[], tag=())
-                for ee in self.inputPattern.getActiveEventsAtTime(e.startTime):
+                for ee in self.inputPattern.activeEventsAtTime(e.startTime):
                     new_chord.components.append([ee.pitch, ee.velocity])
                     for tag in ee.tag:
                         new_chord.tag.append(tag)

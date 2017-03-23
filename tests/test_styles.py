@@ -64,7 +64,7 @@ class GSStylesTest(GSTestBase):
 
       midiPattern.name = '-'.join(chordSuccession)
       print(chordSuccession)
-      midiPattern.setDurationFromLastEvent()
+      midiPattern.durationToLastEvent()
       print(chordPattern)
       print(midiPattern)
       GSIO.toMidi(midiPattern,folderPath="../../sandbox/chordGen",name="tests")

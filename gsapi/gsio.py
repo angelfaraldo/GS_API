@@ -342,7 +342,7 @@ def toMidiFile(myPattern, midiMap=None, folderPath="./output/", name=None):
     beatToTick = pattern.resolution
     for e in myPattern.events:
         startTick = int(beatToTick * e.startTime)
-        endTick = int(beatToTick * e.getEndTime())
+        endTick = int(beatToTick * e.endTime())
         channel = 1
         if isinstance(midiMap, tuple):
             pitch = midiMap[e.tag[0]]

@@ -188,7 +188,7 @@ class Syncopation(BaseDescriptor):
     def __buildBinarizedGrid(self, pattern):
         self.noteGrid = [0] * self.duration
         for i in range(self.duration):
-            self.noteGrid[i] = len(pattern.getActiveEventsAtTime(i))
+            self.noteGrid[i] = len(pattern.activeEventsAtTime(i))
 
     def getDescriptorForPattern(self, pattern):
         self.duration = int(ceil(pattern.duration))
