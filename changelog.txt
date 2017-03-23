@@ -1,3 +1,11 @@
+1.0.5 (23 Mar 2017)
+—————————
+- import/export key metadata in midi files
+- added Pattern method to quantize loop duration to bar duration
+- reorganised the whole library in a single root folder
+- function and method names are pythonised
+- removed c++ side. Now is an only python library.
+
 1.0.4 (12 Mar 2017)
 -------------------
 - new folder architecture
