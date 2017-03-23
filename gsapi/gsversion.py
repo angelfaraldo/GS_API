@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 
 # Library's full version name.
 # Changing it will change the version in pip and in the documentation.
-GSAPI_FULL_VERSION = u'1.0.4'
+GSAPI_FULL_VERSION = u'1.0.5'
 
 
 def getGsapiFullVersion():

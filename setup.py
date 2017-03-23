@@ -37,14 +37,6 @@ if __name__ == '__main__':
     print("gsapi value%s" % getGsapiFullVersion())
     checkLazySetupCommands()
 
-# for now python-midi is not officially on pip3
-# we need to install it manually and it's name become midi:
-#midi_old = 'midi' if sys.version_info >= (3, 0) else 'python-midi'
-
-# There are a couple of libraries that aare both v2 and v3 compatible:
-# 'mido' and 'iomidi'. The second one seems especially suitable given
-# its extreme simplicity (It is only one file!)
-
 setup(name='gsapi',
       version=getGsapiFullVersion(),
       description='Python Symbolic Music Manipulation Tools',
