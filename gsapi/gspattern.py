@@ -13,7 +13,7 @@ import copy
 import logging
 import math
 
-from . import gsdefs, gsutil, gsdescriptors
+from . import gsdefs, gsutil
 
 #logger for pattern related operations
 gspatternLog = logging.getLogger("gsapi.gspattern")

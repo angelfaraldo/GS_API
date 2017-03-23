@@ -304,7 +304,7 @@ def fromMidiCollection(midiGlobPath, noteToTagMap=gsdefs.defaultPitchNames, trac
     return res
 
 
-def toMidiFile(myPattern, midiMap=None, folderPath="./output/", name=None):
+def toMidiFile(myPattern, midiMap=gsdefs.defaultPitchNames, folderPath="./output/", name=None):
     """
     Function to write a Pattern to a MIDI file.
 
@@ -335,6 +335,7 @@ def toMidiFile(myPattern, midiMap=None, folderPath="./output/", name=None):
     track.append(midiio.SetTempoEvent(bpm=myPattern.bpm))
     if myPattern.key:
         keyTuple = __keyToMidiFormat(myPattern.key)
+        print(keyTuple)
         track.append(midiio.KeySignatureEvent(alternatives=keyTuple[0], minor=keyTuple[1]))
 
     # Append the track to the pattern
@@ -343,6 +344,7 @@ def toMidiFile(myPattern, midiMap=None, folderPath="./output/", name=None):
     for e in myPattern.events:
         startTick = int(beatToTick * e.startTime)
         endTick = int(beatToTick * e.endTime())
+        # pitch = e.pitch
         channel = 1
         if isinstance(midiMap, tuple):
             pitch = midiMap[e.tag[0]]
