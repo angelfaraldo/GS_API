@@ -29,7 +29,7 @@ updating doc
 ============
 Be sure that gh-page folder is tracking gh-page branch and not master.
 
-cd gsapi/doc
+cd gsapi/docs
 make html && make install
 cd gh-pages
 git add -A
