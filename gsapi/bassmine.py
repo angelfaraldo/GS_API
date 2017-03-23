@@ -858,7 +858,7 @@ def corpus_analysis(bass_path, drum_path):
         print(bass_names[f][5:-3])
 
         # Read Bassline files
-        bass_pattern = gsio.fromMidi(bass_files[f], "pitchName", tagsFromTrackNameEvents=False)
+        bass_pattern = gsio.fromMidiFile(bass_files[f], "pitchName", tagFromTrackName=False)
         onset_bass = [x.startTime for x in bass_pattern.events]
 
         bass_rhythm = binaryBeatPattern(onset_bass, bass_pattern.duration)
@@ -868,7 +868,7 @@ def corpus_analysis(bass_path, drum_path):
 
         # Read Drum files
         # Filter kick notes
-        kick_pattern = gsio.fromMidi(match_file, {"Kick": 36}, tagsFromTrackNameEvents=False)
+        kick_pattern = gsio.fromMidiFile(match_file, {"Kick": 36}, tagFromTrackName=False)
         onset_kick = [x.startTime for x in kick_pattern.events]
         # Quantize
         kick_rhythm = binaryBeatPattern(onset_kick, kick_pattern.duration)

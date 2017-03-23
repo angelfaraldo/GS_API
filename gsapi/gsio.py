@@ -28,14 +28,57 @@ gsioLog = logging.getLogger("gsapi.gsio")
 gsioLog.setLevel(level=logging.WARNING)
 
 
-# PRIVATE FUNCTIONS
-# =============================================================================
+def __keyToMidiFormat(keyString):
+    mode = 0
+    if 'm' in keyString:
+        keyString = keyString[:-1]
+        mode = 1
+    tonic = gsdefs.midiKey.keys()[gsdefs.midiKey.values().index(keyString)]
+    return tonic, mode
 
-def __midiNoteToTag(_noteToTag):
-    """
-    Private conversion for consistent noteTagMap structure.
 
-    """
+def __metaEventsFromMidiFile(myPattern, midiFile):
+    foundTimeSignatureEvent = False
+    foundTempo = False
+    foundKey = False
+    myPattern.timeSignature = (4, 4)
+    myPattern.bpm = 120
+    myPattern.key = ""
+    myPattern.resolution = midiFile.resolution
+
+    for tracks in midiFile:
+        for e in tracks:
+            if midiio.MetaEvent.is_event(e.statusmsg):
+                if e.metacommand == midiio.TimeSignatureEvent.metacommand:
+                    if foundTimeSignatureEvent and (myPattern.timeSignature != (e.numerator, e.denominator)):
+                        gsioLog.error(myPattern.name + ": found multiple time signatures! Not supported.")
+                    foundTimeSignatureEvent = True
+                    myPattern.timeSignature = (e.numerator, e.denominator)
+                elif e.metacommand == midiio.SetTempoEvent.metacommand:
+                    if foundTempo:
+                        gsioLog.error(myPattern.name + ": found multiple tempi! Not supported.")
+                    foundTempo = True
+                    myPattern.bpm = e.bpm
+                elif e.metacommand == midiio.KeySignatureEvent.metacommand:
+                    if foundKey:
+                        gsioLog.error(myPattern.name + ": found multiple keys! Not supported.")
+                    foundKey = True
+                    keyName = gsdefs.midiKey[e.alternatives]
+                    if e.minor == 1:
+                        keyName += "m"
+                    myPattern.key = keyName
+
+                    # if foundTimeSignatureEvent:
+                    #    break
+    if not foundTimeSignatureEvent:
+        gsioLog.info(myPattern.name + ": no Time Signature event found.")
+    if not foundTempo:
+        gsioLog.info(myPattern.name + ": no Tempo event found.")
+    if not foundKey:
+        gsioLog.info(myPattern.name + ": no Key event found.")
+
+
+def __tagFromMidiNote(_noteToTag):
     noteToTag = copy.copy(_noteToTag)
     if noteToTag == "pitchName":
         noteToTag = {"pitchName": ""}
@@ -52,65 +95,7 @@ def __midiNoteToTag(_noteToTag):
     return noteToTag
 
 
-def __keyToMidiFormat(keyString):
-    mode = 0
-    if 'm' in keyString:
-        keyString = keyString[:-1]
-        mode = 1
-    tonic = gsdefs.midiKey.keys()[gsdefs.midiKey.values().index(keyString)]
-    return tonic, mode
-
-
-def __getMetaFromMidi(myPattern, midiFile):
-    foundTimeSignatureEvent = False
-    foundTempo = False
-    foundKey = False
-    myPattern.timeSignature = (4, 4)
-    myPattern.bpm = 120
-    myPattern.key = ""
-    myPattern.resolution = midiFile.resolution
-
-    for tracks in midiFile:
-        for e in tracks:
-            if midiio.MetaEvent.is_event(e.statusmsg):
-                if e.metacommand == midiio.TimeSignatureEvent.metacommand:
-                    if foundTimeSignatureEvent and (myPattern.timeSignature != (e.numerator, e.denominator)):
-                        gsioLog.error(myPattern.name + ": multiple timeSignature found, not supported.")
-                    foundTimeSignatureEvent = True
-                    myPattern.timeSignature = (e.numerator, e.denominator)
-                elif e.metacommand == midiio.SetTempoEvent.metacommand:
-                    if foundTempo:
-                        gsioLog.error(myPattern.name + ": multiple bpm found, not supported.")
-                    foundTempo = True
-                    myPattern.bpm = e.bpm
-                elif e.metacommand == midiio.KeySignatureEvent.metacommand:
-                    if foundKey:
-                        gsioLog.error(myPattern.name + ": multiple key found, not supported.")
-                    foundKey = True
-                    keyName = gsdefs.midiKey[e.alternatives]
-                    if e.minor == 1:
-                        keyName += "m"
-                    myPattern.key = keyName
-
-        #if foundTimeSignatureEvent:
-        #    break
-    if not foundTimeSignatureEvent:
-        gsioLog.info(myPattern.name + ": no Time Signature event found.")
-    if not foundTempo:
-        gsioLog.info(myPattern.name + ": no Tempo event found.")
-    if not foundKey:
-        gsioLog.info(myPattern.name + ": no Key event found.")
-
-
-def __findTagsFromName(name, noteMapping):
-    res = tuple()
-    for l in noteMapping:
-        if l in name:
-            res += [l]
-    return res
-
-
-def __findTagsFromPitchAndChannel(pitch, channel, noteMapping):
+def __tagsFromMidiNoteAndChannel(pitch, channel, noteMapping):
     if "pitchName" in noteMapping.keys():
         return gsutil.pitch2name(pitch, noteMapping["pitchName"])
 
@@ -124,12 +109,19 @@ def __findTagsFromPitchAndChannel(pitch, channel, noteMapping):
     return res
 
 
-def __fromMidiFormatted(midiPath, noteToTagsMap, tracksToGet=None,
-                        tagsFromTrackNameEvents=False, filterOutNotMapped=True,
-                        checkForOverlapped=False):
+def __tagFromTrackName(name, noteMapping):
+    res = tuple()
+    for l in noteMapping:
+        if l in name:
+            res += [l]
+    return res
+
+
+def __fromMidiFormat(midiPath, noteToTagMap, tracksToGet=None, tagFromTrackName=False,
+                     filterOutNotMapped=True, checkForOverlapped=False):
     """
     Internal function that accepts only consistent noteTagMap
-    structures as created by __midiNoteToTag.
+    structures as created by __tagFromMidiNote.
 
     """
     globalMidi = midiio.read_midifile(midiPath)
@@ -140,9 +132,9 @@ def __fromMidiFormatted(midiPath, noteToTagsMap, tracksToGet=None,
     # boolean to avoid useless string creation
     extremeLog = gsioLog.getEffectiveLevel() <= logging.DEBUG
 
-    # get time signature first
+    # Get time signature first
     gsioLog.info("start processing %s" % myPattern.name)
-    __getMetaFromMidi(myPattern, globalMidi)
+    __metaEventsFromMidiFile(myPattern, globalMidi)
 
     tick_to_quarter_note = 1.0 / globalMidi.resolution
     myPattern.events = []
@@ -155,7 +147,7 @@ def __fromMidiFormatted(midiPath, noteToTagsMap, tracksToGet=None,
         for e in tracks:
             if shouldSkipTrack:
                 continue
-            if not tagsFromTrackNameEvents:
+            if not tagFromTrackName:
                 noteTag = ()
             if midiio.MetaEvent.is_event(e.statusmsg):
                 if e.metacommand == midiio.TrackNameEvent.metacommand:
@@ -168,12 +160,8 @@ def __fromMidiFormatted(midiPath, noteToTagsMap, tracksToGet=None,
                     else:
                         gsioLog.info(myPattern.name + ": getting track: %i %s" % (trackIdx, e.text))
 
-                    if tagsFromTrackNameEvents:
-                        noteTag = __findTagsFromName(e.text, noteToTagsMap)
-                        # noteTag = tuple()
-                        # for l in noteToTagsMap:
-                        #     if l in e.text:
-                        #         noteTag += [l]
+                    if tagFromTrackName:
+                        noteTag = __tagFromTrackName(e.text, noteToTagMap)
 
             if midiio.EndOfTrackEvent.is_event(e.statusmsg):
                 thisDuration = e.tick * tick_to_quarter_note
@@ -190,21 +178,10 @@ def __fromMidiFormatted(midiPath, noteToTagsMap, tracksToGet=None,
                     isNoteOn = False
                 curBeat = tick * 1.0 * tick_to_quarter_note
                 if not noteTag:
-                    if tagsFromTrackNameEvents:
+                    if tagFromTrackName:
                         continue
-                    noteTag = __findTagsFromPitchAndChannel(pitch, e.channel, noteToTagsMap)
-                    # findTagsFromPitchAndChannel:
-                    # ===========================
-                    # if "pitchName" in noteToTagsMap.keys():
-                    #     noteTag = gsutil.pitch2name(pitch, noteToTagsMap["pitchName"])
-                    # else:
-                    #     noteTag = tuple()
-                    #     for l in noteToTagsMap:
-                    #         for le in noteToTagsMap[l]:
-                    #             if (le[0] in {"*", pitch}) and (le[1] in {"*", e.channel}):
-                    #                 noteTag += (l,)
-                    #     if len(noteTag) == 1:
-                    #         noteTag = noteTag[0]
+                    noteTag = __tagsFromMidiNoteAndChannel(pitch, e.channel, noteToTagMap)
+
                 if not noteTag:
                     if [e.channel, pitch] not in notFoundTags:
                         gsioLog.info(myPattern.name +
@@ -215,32 +192,24 @@ def __fromMidiFormatted(midiPath, noteToTagsMap, tracksToGet=None,
                         continue
                 if isNoteOn:
                     if extremeLog: gsioLog.debug("on %d %f" % (pitch, curBeat))
-                    myPattern.events += [gspattern.Event(startTime=curBeat,
-                                                         duration=-1,
-                                                         pitch=pitch,
-                                                         velocity=velocity,
-                                                         tag=noteTag)]
+                    myPattern.events += [gspattern.Event(startTime=curBeat, duration=-1, pitch=pitch,
+                                                         velocity=velocity, tag=noteTag)]
                 if isNoteOff:
                     if extremeLog:
                         gsioLog.debug("off %d %f" % (pitch, curBeat))
                     foundNoteOn = False
                     isTrueNoteOff = midiio.NoteOffEvent.is_event(e.statusmsg)
                     for i in reversed(myPattern.events):
-                        if (i.pitch == pitch) and (i.tag == noteTag) and \
-                                ((isTrueNoteOff and (
-                                    curBeat >= i.startTime)) or curBeat > i.startTime) \
-                                and i.duration <= 0.0001:
+                        if (i.pitch == pitch) and (i.tag == noteTag) and ((isTrueNoteOff and (curBeat >= i.startTime))
+                                                                    or curBeat > i.startTime) and i.duration <= 0.0001:
                             foundNoteOn = True
                             i.duration = max(0.0001, curBeat - i.startTime)
                             lastNoteOff = max(curBeat, lastNoteOff)
-                            gsioLog.info("set duration %f at start %f " % (
-                            i.duration, i.startTime))
+                            gsioLog.info("set duration %f at start %f " % (i.duration, i.startTime))
                             break
                     if not foundNoteOn:
-                        gsioLog.warning(myPattern.name +
-                                        ": not found note on\n %s\n%s\n%s , %s "
-                                        % (e, myPattern.events[-1], noteTag,
-                                           curBeat))
+                        gsioLog.warning(myPattern.name + ": not found note on\n %s\n%s\n%s , %s " %
+                                        (e, myPattern.events[-1], noteTag, curBeat))
         trackIdx += 1
     elementSize = 4.0 / myPattern.timeSignature[1]
     barSize = myPattern.timeSignature[0] * elementSize
@@ -251,13 +220,9 @@ def __fromMidiFormatted(midiPath, noteToTagsMap, tracksToGet=None,
     return myPattern
 
 
-# MIDI
-# =============================================================================
-
-def fromMidi(midiFile, noteToTagsMap="pitchName", tracksToGet=None,
-             tagsFromTrackNameEvents=False, filterOutNotMapped=True,
-             checkForOverlapped=False):
-    # TODO: tagsFromTrackNameEvents=True returns an eventless pattern!
+def fromMidiFile(midiFile, noteToTagMap="pitchName", tracksToGet=None, tagFromTrackName=False,
+                 filterOutNotMapped=True, checkForOverlapped=False):
+    # TODO: tagFromTrackName=True returns an eventless pattern!
     """
     Loads a MIDI file as a pattern.
 
@@ -265,11 +230,11 @@ def fromMidi(midiFile, noteToTagsMap="pitchName", tracksToGet=None,
     ----------
     midiFile: str
         a valid midi filePath.
-    noteToTagsMap: dict
+    noteToTagMap: dict
         a dictionary converting pitches to tags.
     tracksToGet: list of str or int
         if not empty, specifies Midi tracks wanted either by name or index
-    tagsFromTrackNameEvents: bool
+    tagFromTrackName: bool
         use only track names to resolve mapping.
         Useful for midi containing named tracks.
     filterOutNotMapped: bool
@@ -294,18 +259,14 @@ def fromMidi(midiFile, noteToTagsMap="pitchName", tracksToGet=None,
     of the mapping, it'll be choosen without anyother consideration
 
     """
-    _noteToTagsMap = __midiNoteToTag(noteToTagsMap)
-    return __fromMidiFormatted(midiPath=midiFile,
-                               noteToTagsMap=_noteToTagsMap,
-                               tracksToGet=tracksToGet,
-                               tagsFromTrackNameEvents=tagsFromTrackNameEvents,
-                               filterOutNotMapped=filterOutNotMapped,
-                               checkForOverlapped=checkForOverlapped)
+    _noteToTagMap = __tagFromMidiNote(noteToTagMap)
+    return __fromMidiFormat(midiPath=midiFile, noteToTagMap=_noteToTagMap, tracksToGet=tracksToGet,
+                            tagFromTrackName=tagFromTrackName, filterOutNotMapped=filterOutNotMapped,
+                            checkForOverlapped=checkForOverlapped)
 
 
-def fromMidiCollection(midiGlobPath, noteToTagsMap=gsdefs.defaultPitchNames,
-                       tracksToGet=None, tagsFromTrackNameEvents=False,
-                       filterOutNotMapped=True, desiredLength=0):
+def fromMidiCollection(midiGlobPath, noteToTagMap=gsdefs.defaultPitchNames, tracksToGet=None,
+                       tagFromTrackName=False, filterOutNotMapped=True, desiredLength=0):
     """
     Loads a collection of MIDI Files
 
@@ -313,11 +274,11 @@ def fromMidiCollection(midiGlobPath, noteToTagsMap=gsdefs.defaultPitchNames,
     ----------
     midiGlobPath: str
         midi filePath in glob style naming convention ('/midi/folder/*.mid')
-    noteToTagsMap: dict
+    noteToTagMap: dict
         a dictionary converting pitches to tags.
     tracksToGet: str or int
         if not empty, specifies Midi tracks wanted either by name or index
-    tagsFromTrackNameEvents: bool
+    tagFromTrackName: bool
         use only track names to resolve mapping.
         Useful for midi containing named tracks.
     filterOutNotMapped: bool
@@ -331,13 +292,11 @@ def fromMidiCollection(midiGlobPath, noteToTagsMap=gsdefs.defaultPitchNames,
 
     """
     res = []
-    _noteToTagsMap = __midiNoteToTag(noteToTagsMap)
+    _noteToTagMap = __tagFromMidiNote(noteToTagMap)
     for f in glob.glob(midiGlobPath):
         name = os.path.splitext(os.path.basename(f))[0]
         gsioLog.info("getting " + name)
-        p = fromMidi(f, _noteToTagsMap,
-                     tagsFromTrackNameEvents=tagsFromTrackNameEvents,
-                     filterOutNotMapped=filterOutNotMapped)
+        p = fromMidiFile(f, _noteToTagMap, tagFromTrackName=tagFromTrackName, filterOutNotMapped=filterOutNotMapped)
         if desiredLength > 0:
             res += p.splitInEqualLengthPatterns(desiredLength, makeCopy=False)
         else:
@@ -345,7 +304,7 @@ def fromMidiCollection(midiGlobPath, noteToTagsMap=gsdefs.defaultPitchNames,
     return res
 
 
-def toMidi(myPattern, midiMap=None, folderPath="./output/", name=None):
+def toMidiFile(myPattern, midiMap=None, folderPath="./output/", name=None):
     """
     Function to write a Pattern to a MIDI file.
 
@@ -414,9 +373,6 @@ def toMidi(myPattern, midiMap=None, folderPath="./output/", name=None):
     return exportedPath
 
 
-# JSON
-# =============================================================================
-
 def fromJSONFile(filePath, conserveTuple=False):
     """
     Loads a pattern to the internal JSON Format.
@@ -441,8 +397,7 @@ def fromJSONFile(filePath, conserveTuple=False):
         return gspattern.Pattern().fromJSONDict(json.load(f, object_hook=hinted_tuple_hook if conserveTuple else None))
 
 
-def toJSONFile(myPattern, folderPath, useTagIndexing=True,
-               nameSuffix=None, conserveTuple=False):
+def toJSONFile(myPattern, folderPath, useTagIndexing=True, nameSuffix=None, conserveTuple=False):
     """
     Saves a pattern to internal JSON Format.
 
@@ -488,9 +443,6 @@ def toJSONFile(myPattern, folderPath, useTagIndexing=True,
                   cls=encoderClass, indent=1, separators=(',', ':'))
     return os.path.abspath(filePath)
 
-
-# PICKLE
-# =============================================================================
 
 def fromPickleFile(filePath):
     """

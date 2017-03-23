@@ -88,8 +88,8 @@ class Dataset(object):
         self.patterns = []
         for p in self.files:
             gsdatasetLog.info('Parsing ' + p)
-            p = gsio.fromMidi(p, self.midiMap, tracksToGet=[],
-                              checkForOverlapped=self.checkForOverlapped)
+            p = gsio.fromMidiFile(p, self.midiMap, tracksToGet=[],
+                                  checkForOverlapped=self.checkForOverlapped)
             self.patterns += [p]
         return self.patterns
 
