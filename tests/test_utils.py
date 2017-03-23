@@ -1,28 +1,25 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-# python 3 compatibility
 from __future__ import absolute_import, division, print_function
+
+from .test_utils import *
 
 import unittest
 import os
 import sys
-# todo check we need import glob and random
 import glob
 import random
-
-if __name__ == '__main__':
-    sys.path.insert(1, os.path.abspath(os.path.join(__file__, os.pardir, os.pardir, os.pardir)))
 
 from gsapi import *
 
 testLog = logging.getLogger("gsapi.GSTest")
 
+
 def runTest(profile=False, getStat=False):
     if profile:
         import cProfile
-        # todo check we need import re
-        import re
+        # import re # todo check we need import re
         cProfile.run('unittest.main()', filename='profiled')
     if getStat:
         import pstats
@@ -32,30 +29,38 @@ def runTest(profile=False, getStat=False):
         unittest.main()
 
 
-class singleTonDataset(GSDataset):
-    """class to parse only once a dataset and share it between tests
+class singleTonDataset(gsdataset.Dataset):
     """
+    Class to parse only once a dataset and share it between tests
+
+    """
+
     def __init__(self, **kwargs):
         self.creationArgs = kwargs
         self.dataset = None
 
     def get(self):  # Todo: check added self to args is correct
         if not self.dataset:
-            self.dataset = GSDataset(**self.creationArgs)
+            self.dataset = gsdataset.Dataset(**self.creationArgs)
         return self.dataset  # Todo: check prepent self to variable
 
+
 def getAllDescriptorsClasses():
-    """return list of tuples (descriptorName, descriptorClass)
     """
-    res = []
-    for elem in dir(GSDescriptors):
-        if  'GSDescriptor' in elem:
-            res+=[ (elem, getattr(GSDescriptors,elem,None))]
-    return res
+    Return list of tuples (descriptorName, descriptorClass)
+
+    """
+    result = []
+    for element in dir(gsdescriptors):
+        if element[0].isupper():
+            result += [(element, getattr(gsdescriptors, element, None))]
+    return result
+
 
 class GSTestBase(unittest.TestCase):
     """
-    helper function for tests classes.
+    Helper function for tests classes.
+
     """
     __cachedDataset = None
 
@@ -68,26 +73,24 @@ class GSTestBase(unittest.TestCase):
     # sub class can override that to load a cached dataset only once per session (not per test)
     #  default will crawl all drums Folder
     def generateCachedDataset(self):
-        raise GSDataset(midiGlob="*.mid",
-                        midiFolder=self.getLocalCorpusPath('drums'),
-                        midiMap="pitchName",
-                        checkForOverlapped=True)
+        raise gsdataset.Dataset(midiGlob="*.mid", midiFolder=self.getLocalCorpusPath('drums'),
+                                midiMap="pitchName", checkForOverlapped=True)
 
     # helper to get local corpora path
     def getLocalCorpusPath(self, toAppend=""):
-        import os
+        import os  # todo see how this works!
         return os.path.abspath(__file__ + "../../../../../corpora/" + toAppend)
 
     def checkNoTagsOverlaps(self, pattern, msg=None):
         tags = pattern.getAllTags()
-        pattern.reorderEvents();
+        pattern.reorderEvents()
         for t in tags:
             lastEvent = None
             _checkedP = pattern.getPatternWithTags(tagToLookFor=t)
             for e in _checkedP.events:
                 if lastEvent:
                     self.assertTrue(e.startTime >= lastEvent.getEndTime(),
-                                "%s: event : (%s \noverlaps with %s)" % (msg, e, lastEvent))
+                                    "%s: event : (%s \noverlaps with %s)" % (msg, e, lastEvent))
                 lastEvent = e
 
     def checkPatternValid(self, pattern, checkForDoublons=True, checkOverlap=True, msg=""):
@@ -112,35 +115,33 @@ class GSTestBase(unittest.TestCase):
         if checkOverlap:
             self.checkNoTagsOverlaps(pattern, msg)
 
-    def checkPatternEquals(self,patternA,patternB,checkViewpoints = False,tolerance = 0):
-        if patternA!=patternB:
-            self.assertEquals(patternA.duration,patternB.duration)
-            self.assertEquals(patternA.bpm,patternB.bpm)
-            self.assertEquals(patternA.startTime,patternB.startTime)
-            self.assertEquals(patternA.timeSignature,patternB.timeSignature)
-            self.checkEventsEquals(patternA,patternB,tolerance=tolerance)
-
+    def checkPatternEquals(self, patternA, patternB, checkViewpoints=False, tolerance=0):
+        if patternA != patternB:
+            self.assertEquals(patternA.duration, patternB.duration)
+            self.assertEquals(patternA.bpm, patternB.bpm)
+            self.assertEquals(patternA.startTime, patternB.startTime)
+            self.assertEquals(patternA.timeSignature, patternB.timeSignature)
+            self.checkEventsEquals(patternA, patternB, tolerance=tolerance)
             # if we hit next line, no exception were raised so we may have forgotten to check something
-            if(tolerance==0):
-                self.assertTrue(False,'pattern not equals for unknown reasons')
-        if checkViewpoints and patternA.viewpoints!=patternB.viewpoints:
-            self.assertEquals(len(patternA.viewpoints),len(patternB.viewpoints))
+            if tolerance == 0:
+                self.assertTrue(False, 'pattern not equals for unknown reasons')
+        if checkViewpoints and patternA.viewpoints != patternB.viewpoints:
+            self.assertEquals(len(patternA.viewpoints), len(patternB.viewpoints))
             for k in patternA.viewpoints:
-                self.checkPatternEquals(patternA.viewpoints[k],patternB.viewpoints[k],checkViewpoints=checkViewpoints)
+                self.checkPatternEquals(patternA.viewpoints[k], patternB.viewpoints[k],
+                                        checkViewpoints=checkViewpoints)
 
+    def areEqualEvents(self, eA, eB, tolerance=0):
+        return abs(eA.startTime - eB.startTime) < tolerance and abs(eA.duration - eB.duration) < tolerance and (
+        eA.pitch == eB.pitch) and (eA.velocity == eB.velocity) and (eA.tag == eB.tag)
 
-    def AreEventEquals(self,eA,eB,tolerance=0):
-        return abs(eA.startTime - eB.startTime) < tolerance and abs(eA.duration-eB.duration)<tolerance and (eA.pitch == eB.pitch) and (eA.velocity==eB.velocity) and (eA.tag==eB.tag)
-
-    def checkEventsEquals(self,patternA,patternB,tolerance):
-        self.assertEquals(len(patternA.events),len(patternB.events))
-        patternA.reorderEvents();
-        patternB.reorderEvents();
+    def checkEventsEquals(self, patternA, patternB, tolerance):
+        self.assertEquals(len(patternA.events), len(patternB.events))
+        patternA.reorderEvents()
+        patternB.reorderEvents()
         for i in range(len(patternA.events)):
-            self.assertTrue(self.AreEventEquals(patternA.events[i],patternB.events[i],tolerance),msg="%s \n %s"%(patternA.events[i],patternB.events[i]))
+            self.assertTrue(self.areEqualEvents(patternA.events[i], patternB.events[i], tolerance),
+                            msg="%s \n %s" % (patternA.events[i], patternB.events[i]))
 
     def setUp(self):
-        testLog.info(
-        '-------------------------------------\n' \
-        'Starting tests: '+ self._testMethodName +\
-        '-------------------------------------')
+        testLog.info('\nStarting tests: ' + self._testMethodName + '-------------------------------------')

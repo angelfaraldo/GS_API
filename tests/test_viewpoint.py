@@ -3,49 +3,34 @@
 
 from __future__ import absolute_import, division, print_function
 
-import unittest
-import os
-import sys
-
-from gsapi import *
-import random,glob
-from .test_pattern_utils import *
+from .test_utils import *
 
 
 class GSViewpointTest(GSTestBase):
-
     def generateCachedDataset(self):
-        return GSDataset(midiGlob="*.mid",
-                         midiFolder=self.getLocalCorpusPath('harmony'),
-                         midiMap="pitchName",
-                         checkForOverlapped=True)
+        return gsdataset.Dataset(midiGlob="*.mid", midiFolder=self.getLocalCorpusPath('harmony'),
+                                 midiMap="pitchName", checkForOverlapped=True)
 
     def test_viewpoint_defaults(self):
         for midiPattern in self.cachedDataset:
-            print( "\n"+ midiPattern.name)
-            # checking default implementation
+            print("\n" + midiPattern.name)
             midiPattern.generateViewpoint("chords")
-            self.checkPatternValid(midiPattern, msg='chordviewPoint failed')
+            self.checkPatternValid(midiPattern, msg='chordViewPoint failed')
             for e in midiPattern.viewpoints["chords"].events:
                 print(e)
 
-
     def test_viewpoint_allDescriptors_allSliceTypes(self):
 
-
         def _testAndPrint(sliceType):
-
-            # checking default implementation
             patternBeforeVP = midiPattern.copy()
-            midiPattern.generateViewpoint(descriptorName,descriptor=descriptor,sliceType=sliceType)
-            self.assertTrue(patternBeforeVP==midiPattern, msg='viewpoint generation modified original pattern failed')
-            self.checkPatternValid(midiPattern.viewpoints[descriptorName],checkOverlap=False, msg='generated viewpoint is not a valid pattern %s'%midiPattern.viewpoints[descriptorName])
-            # for e in midiPattern.viewpoints["chords"].events:
-            #     print e
-
+            midiPattern.generateViewpoint(descriptorName, escriptor=descriptor, sliceType=sliceType)
+            self.assertTrue(patternBeforeVP == midiPattern,
+                            msg='viewpoint generation modified original pattern failed')
+            self.checkPatternValid(midiPattern.viewpoints[descriptorName], checkOverlap=False,
+                                   msg='generated viewpoint is not a valid pattern %s' %
+                                       midiPattern.viewpoints[descriptorName])
 
         def _testDescriptor(name):
-
             _testAndPrint(sliceType="perEvent")
             _testAndPrint(sliceType="all")
             _testAndPrint(sliceType=1)
@@ -53,18 +38,11 @@ class GSViewpointTest(GSTestBase):
             _testAndPrint(sliceType=3)
 
         for midiPattern in self.cachedDataset:
-
-            for descriptorName,descriptorClass in getAllDescriptorsClasses():
+            for descriptorName, descriptorClass in getAllDescriptorsClasses():
                 descriptor = descriptorClass()
                 _testDescriptor(name=descriptorName)
-
-            testLog.info(midiPattern.name+" ok")
-
+            testLog.info(midiPattern.name + " ok")
 
 
 if __name__ == '__main__':
-
-    print(getAllDescriptors())
     runTest(profile=False, getStat=False)
-
-

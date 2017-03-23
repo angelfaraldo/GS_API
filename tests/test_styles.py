@@ -3,77 +3,45 @@
 
 from __future__ import absolute_import, division, print_function
 
-import os
-import sys
-
-if __name__ == '__main__':
-    sys.path.insert(1, os.path.abspath(os.path.join(__file__, os.pardir, os.pardir, os.pardir)))
-    from .test_pattern_utils import *
-    from python.gsapi.utils.pitchSpelling import *
-    from python.gsapi.patterns.utils import *
-else:
-    from .test_pattern_utils import *
-    from python.gsapi.utils.pitchSpelling import *
-    from python.gsapi.patterns.utils import *
-from gsapi import *
+from .test_utils import *
 
 
 class GSStylesTest(GSTestBase):
-
     def generateCachedDataset(self):
-      return GSDataset(midiGlob="*.mid",
-                       midiFolder=self.getLocalCorpusPath('harmony'),
-                       midiMap="pitchName",
-                       checkForOverlapped=True)
+        return gsdataset.Dataset(midiGlob="*.mid", midiFolder=self.getLocalCorpusPath('harmony'),
+                                 midiMap="pitchName", checkForOverlapped=True)
 
     def testGSMarkovStyleSimple(self):
-      loopDuration=4
-      markov = GSStyles.GSMarkovStyle(order = 1,numSteps=32,loopDuration=loopDuration)
-      pList = self.cachedDataset.getAllSliceOfDuration(loopDuration);
-      markov.generateStyle(pList)
-      self.checkPatternValid(markov.generatePattern())
-
+        loopDuration = 4
+        markov = gsstyles.MarkovStyle(order=1, numSteps=32, loopDuration=loopDuration)
+        pList = self.cachedDataset.getAllSliceOfDuration(loopDuration)
+        markov.generateStyle(pList)
+        self.checkPatternValid(markov.generatePattern())
 
     def testMarkovFromViewpointChords(self):
-      loopDuration=32
-      pList = self.cachedDataset.getAllSliceOfDuration(loopDuration);
-
-      markov = GSStyles.GSMarkovStyle(order = 1,numSteps=4,loopDuration=loopDuration)
-
-      cList = list(map(lambda x:x.generateViewpoint("chords",GSDescriptors.GSDescriptorChord(),sliceType = 4),pList))
-      # for p in cList:
-      #   for e in p:
-      #     e.tag = str(e.tag[0])+str(e.tag[1])
-      markov.generateStyle(cList)
-      # print (markov.markovChain)
-
-      chordPattern  =markov.generatePattern()
-
-      # print (chordPattern)
-      self.checkPatternValid(chordPattern)
-
-
-      midiPattern = GSPattern()
-      chordSuccession = []
-      for e in chordPattern:
-        chordSuccession+=[str("".join(e.tag))]
-        chroma = defaultPitchNames.index(e.tag[0])
-        notes = chordTypes[e.tag[1]]
-        for n in notes:
-          midiPattern.events+=[GSPatternEvent(pitch = 48+chroma+n,startTime=e.startTime,duration=e.duration,velocity=100)]
-
-      midiPattern.name = '-'.join(chordSuccession)
-      print(chordSuccession)
-      midiPattern.durationToLastEvent()
-      print(chordPattern)
-      print(midiPattern)
-      GSIO.toMidi(midiPattern,folderPath="../../sandbox/chordGen",name="tests")
-
-
-
+        loopDuration = 32
+        pList = self.cachedDataset.getAllSliceOfDuration(loopDuration)
+        markov = gsstyles.MarkovStyle(order=1, numSteps=4, loopDuration=loopDuration)
+        cList = list(map(lambda x: x.generateViewpoint("chords", gsdescriptors.Chord(), sliceType=4), pList))
+        markov.generateStyle(cList)
+        chordPattern = markov.generatePattern()
+        self.checkPatternValid(chordPattern)
+        midiPattern = gspattern.Pattern()
+        chordSequence = []
+        for e in chordPattern:
+            chordSequence += [str("".join(e.tag))]
+            chroma = gsdefs.defaultPitchNames.index(e.tag[0])
+            notes = gsdefs.chordTypes[e.tag[1]]
+            for n in notes:
+                midiPattern.events += [gspattern.Event(pitch=48 + chroma + n, startTime=e.startTime,
+                                                       duration=e.duration, velocity=100)]
+        midiPattern.name = '-'.join(chordSequence)
+        print(chordSequence)
+        midiPattern.durationToLastEvent()
+        print(chordPattern)
+        print(midiPattern)
+        gsio.toMidiFile(midiPattern, folderPath="../output/chordGen", name="tests")
 
 
 if __name__ == '__main__':
-
     runTest(profile=False, getStat=False)
-
