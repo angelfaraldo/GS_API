@@ -38,7 +38,7 @@ localDirectory = os.path.abspath(os.path.join(__file__,os.path.pardir))
 searchPath = os.path.join(localDirectory,"midi","nj-house.mid");
 # searchPath = os.path.join(localDirectory,"midi/corpora-harmony","*.mid");
 #searchPath = os.path.join(localDirectory,"*.mid");
-# midiMap = "pitchNames"
+# midiMap = "pitchName"
 dataSet = GSDataset(midiGlob=searchPath,midiMap=GSPatternUtils.simpleDrumMap)
 # searchPath = os.path.join(localDirectory,"midi","*.mid");
 
@@ -86,7 +86,7 @@ def tagToPitch(tag):
 
 
 def mapMidi(pattern,midiMap):
-	if midiMap=="pitchNames" :
+	if midiMap=="pitchName" :
 		for e in pattern.events:
 			e.pitch = tagToPitch(e.tags[0])
 	else:

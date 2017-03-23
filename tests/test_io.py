@@ -24,7 +24,7 @@ class GSIOTest(GSTestBase):
     def generateCachedDataset(self):
         return GSDataset(midiGlob="*.mid",
                          midiFolder=self.getLocalCorpusPath('drums'),
-                         midiMap="pitchNames",
+                         midiMap="pitchName",
                          checkForOverlapped=True)
 
     def test_ImportExportMidi(self):

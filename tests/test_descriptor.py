@@ -20,7 +20,7 @@ class DescriptorTests(GSTestBase):
     def generateCachedDataset(self):
         return GSDataset(midiGlob="funkyfresh.mid",
                          midiFolder=self.getLocalCorpusPath('drums'),
-                         midiMap="pitchNames",
+                         midiMap="pitchName",
                          checkForOverlapped=True)
 
     def test_density_simple(self):
@@ -56,7 +56,7 @@ class DescriptorTests(GSTestBase):
         # GSIO.iolog.setLevel('INFO')
         harmonyDataset = GSDataset(midiGlob="*.mid",
                                    midiFolder=self.getLocalCorpusPath('harmony'),
-                                   midiMap="pitchNames",
+                                   midiMap="pitchName",
                                    checkForOverlapped=True)
 
         def getChromas(pattern):

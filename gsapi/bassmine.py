@@ -858,7 +858,7 @@ def corpus_analysis(bass_path, drum_path):
         print(bass_names[f][5:-3])
 
         # Read Bassline files
-        bass_pattern = gsio.fromMidi(bass_files[f], "pitchNames", tagsFromTrackNameEvents=False)
+        bass_pattern = gsio.fromMidi(bass_files[f], "pitchName", tagsFromTrackNameEvents=False)
         onset_bass = [x.startTime for x in bass_pattern.events]
 
         bass_rhythm = binaryBeatPattern(onset_bass, bass_pattern.duration)

@@ -37,7 +37,7 @@ searchPath = os.path.join(localDirectory,"midi")
 styleName = 'daftpunk2.mid'
 # searchPath = os.path.join(localDirectory,"midi/corpus-harmony","*.mid");
 #searchPath = os.path.join(localDirectory,"*.mid");
-# midiMap = "pitchNames"
+# midiMap = "pitchName"
 dataSet = GSDataset(midiFolder = searchPath, midiGlob=styleName,midiMap=GSPatternUtils.simpleDrumMap)
 # searchPath = os.path.join(localDirectory,"midi","*.mid");
 
@@ -89,7 +89,7 @@ def tagToPitch(tag):
 
 
 def mapMidi(pattern,midiMap):
-	if midiMap=="pitchNames" :
+	if midiMap=="pitchName" :
 		for e in pattern.events:
 			e.pitch = tagToPitch(e.tag)
 	else:

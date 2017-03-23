@@ -31,25 +31,25 @@ gsioLog.setLevel(level=logging.WARNING)
 # PRIVATE FUNCTIONS
 # =============================================================================
 
-def __formatNoteToTags(_noteToTags):
+def __midiNoteToTag(_noteToTag):
     """
     Private conversion for consistent noteTagMap structure.
 
     """
-    noteToTags = copy.copy(_noteToTags)
-    if noteToTags == "pitchNames":
-        noteToTags = {"pitchNames": ""}
-    for n in noteToTags:
-        if n == "pitchNames":
-            if not noteToTags["pitchNames"]:
-                noteToTags["pitchNames"] = gsdefs.defaultPitchNames
+    noteToTag = copy.copy(_noteToTag)
+    if noteToTag == "pitchName":
+        noteToTag = {"pitchName": ""}
+    for n in noteToTag:
+        if n == "pitchName":
+            if not noteToTag["pitchName"]:
+                noteToTag["pitchName"] = gsdefs.defaultPitchNames
         else:
-            if not isinstance(noteToTags[n], list):
-                noteToTags[n] = [noteToTags[n]]
-            for i in range(len(noteToTags[n])):
-                if isinstance(noteToTags[n][i], int):
-                    noteToTags[n][i] = (noteToTags[n][i], "*")
-    return noteToTags
+            if not isinstance(noteToTag[n], list):
+                noteToTag[n] = [noteToTag[n]]
+            for i in range(len(noteToTag[n])):
+                if isinstance(noteToTag[n][i], int):
+                    noteToTag[n][i] = (noteToTag[n][i], "*")
+    return noteToTag
 
 
 def __keyToMidiFormat(keyString):
@@ -61,7 +61,7 @@ def __keyToMidiFormat(keyString):
     return tonic, mode
 
 
-def __findMetaFromMidi(myPattern, midiFile):
+def __getMetaFromMidi(myPattern, midiFile):
     foundTimeSignatureEvent = False
     foundTempo = False
     foundKey = False
@@ -111,8 +111,8 @@ def __findTagsFromName(name, noteMapping):
 
 
 def __findTagsFromPitchAndChannel(pitch, channel, noteMapping):
-    if "pitchNames" in noteMapping.keys():
-        return gsutil.pitch2name(pitch, noteMapping["pitchNames"])
+    if "pitchName" in noteMapping.keys():
+        return gsutil.pitch2name(pitch, noteMapping["pitchName"])
 
     res = tuple()
     for l in noteMapping:
@@ -129,7 +129,7 @@ def __fromMidiFormatted(midiPath, noteToTagsMap, tracksToGet=None,
                         checkForOverlapped=False):
     """
     Internal function that accepts only consistent noteTagMap
-    structures as created by __formatNoteToTags.
+    structures as created by __midiNoteToTag.
 
     """
     globalMidi = midiio.read_midifile(midiPath)
@@ -142,7 +142,7 @@ def __fromMidiFormatted(midiPath, noteToTagsMap, tracksToGet=None,
 
     # get time signature first
     gsioLog.info("start processing %s" % myPattern.name)
-    __findMetaFromMidi(myPattern, globalMidi)
+    __getMetaFromMidi(myPattern, globalMidi)
 
     tick_to_quarter_note = 1.0 / globalMidi.resolution
     myPattern.events = []
@@ -195,8 +195,8 @@ def __fromMidiFormatted(midiPath, noteToTagsMap, tracksToGet=None,
                     noteTag = __findTagsFromPitchAndChannel(pitch, e.channel, noteToTagsMap)
                     # findTagsFromPitchAndChannel:
                     # ===========================
-                    # if "pitchNames" in noteToTagsMap.keys():
-                    #     noteTag = gsutil.pitch2name(pitch, noteToTagsMap["pitchNames"])
+                    # if "pitchName" in noteToTagsMap.keys():
+                    #     noteTag = gsutil.pitch2name(pitch, noteToTagsMap["pitchName"])
                     # else:
                     #     noteTag = tuple()
                     #     for l in noteToTagsMap:
@@ -254,7 +254,7 @@ def __fromMidiFormatted(midiPath, noteToTagsMap, tracksToGet=None,
 # MIDI
 # =============================================================================
 
-def fromMidi(midiFile, noteToTagsMap="pitchNames", tracksToGet=None,
+def fromMidi(midiFile, noteToTagsMap="pitchName", tracksToGet=None,
              tagsFromTrackNameEvents=False, filterOutNotMapped=True,
              checkForOverlapped=False):
     # TODO: tagsFromTrackNameEvents=True returns an eventless pattern!
@@ -280,7 +280,7 @@ def fromMidi(midiFile, noteToTagsMap="pitchNames", tracksToGet=None,
 
     Notes
     -----
-    You can set NoteToTagsMap to "pitchNames" or optionally set the value to
+    You can set NoteToTagsMap to "pitchName" or optionally set the value to
     the list of string for pitches from C. noteMapping maps classes to a list
     of possible mappings. A mapping can be either:
 
@@ -294,7 +294,7 @@ def fromMidi(midiFile, noteToTagsMap="pitchNames", tracksToGet=None,
     of the mapping, it'll be choosen without anyother consideration
 
     """
-    _noteToTagsMap = __formatNoteToTags(noteToTagsMap)
+    _noteToTagsMap = __midiNoteToTag(noteToTagsMap)
     return __fromMidiFormatted(midiPath=midiFile,
                                noteToTagsMap=_noteToTagsMap,
                                tracksToGet=tracksToGet,
@@ -331,7 +331,7 @@ def fromMidiCollection(midiGlobPath, noteToTagsMap=gsdefs.defaultPitchNames,
 
     """
     res = []
-    _noteToTagsMap = __formatNoteToTags(noteToTagsMap)
+    _noteToTagsMap = __midiNoteToTag(noteToTagsMap)
     for f in glob.glob(midiGlobPath):
         name = os.path.splitext(os.path.basename(f))[0]
         gsioLog.info("getting " + name)

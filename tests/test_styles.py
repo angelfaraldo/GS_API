@@ -23,7 +23,7 @@ class GSStylesTest(GSTestBase):
     def generateCachedDataset(self):
       return GSDataset(midiGlob="*.mid",
                        midiFolder=self.getLocalCorpusPath('harmony'),
-                       midiMap="pitchNames",
+                       midiMap="pitchName",
                        checkForOverlapped=True)
 
     def testGSMarkovStyleSimple(self):

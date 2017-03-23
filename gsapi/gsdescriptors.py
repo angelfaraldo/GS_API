@@ -7,7 +7,6 @@ from math import ceil
 
 from . import gsdefs
 
-
 ### FUNCTION Definitions!
 
 def intervalListToProfile(intervalList, length=12):

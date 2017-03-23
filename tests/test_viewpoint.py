@@ -7,9 +7,6 @@ import unittest
 import os
 import sys
 
-if __name__ == '__main__':
-    sys.path.insert(1, os.path.abspath(os.path.join(__file__, os.pardir, os.pardir, os.pardir)))
-
 from gsapi import *
 import random,glob
 from .test_pattern_utils import *
@@ -20,7 +17,7 @@ class GSViewpointTest(GSTestBase):
     def generateCachedDataset(self):
         return GSDataset(midiGlob="*.mid",
                          midiFolder=self.getLocalCorpusPath('harmony'),
-                         midiMap="pitchNames",
+                         midiMap="pitchName",
                          checkForOverlapped=True)
 
     def test_viewpoint_defaults(self):

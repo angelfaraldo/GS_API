@@ -32,7 +32,7 @@ class MarkovPatternTest(GSTestBase):
         return GSDataset(midiGlob="daftpunk.mid",
                          midiFolder=self.getLocalCorpusPath('drums'),
                          midiMap=GSPatternUtils.verySimpleDrumMap
-                         # midiMap="pitchNames"
+                         # midiMap="pitchName"
                          )
 
     def buildMarkov(self, order, numSteps, loopDuration):

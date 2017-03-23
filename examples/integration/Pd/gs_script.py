@@ -33,7 +33,7 @@ def GSPatternToList(gspattern):
 
 
 def normalize_to_c4(midi_file):
-    my_pattern = gsapi.gsio.fromMidi(str(midi_file), "pitchNames")
+    my_pattern = gsapi.gsio.fromMidi(str(midi_file), "pitchName")
     start_event = my_pattern.events[0].startTime
     first_chord = my_pattern.getStartingEventsAtTime(start_event)
     first_notes = []

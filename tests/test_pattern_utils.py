@@ -70,7 +70,7 @@ class GSTestBase(unittest.TestCase):
     def generateCachedDataset(self):
         raise GSDataset(midiGlob="*.mid",
                         midiFolder=self.getLocalCorpusPath('drums'),
-                        midiMap="pitchNames",
+                        midiMap="pitchName",
                         checkForOverlapped=True)
 
     # helper to get local corpora path
