@@ -19,8 +19,8 @@ profiled
 *.so
 *.dll
 
-docs/_build/*
-docs/gh-pages/*
+docs_old/_build/*
+docs_old/gh-pages/*
 DBStyle.json
 
 gsapi/.idea/*
@@ -35,3 +35,4 @@ output/*.png
 output/*.csv
 output/mr_scruff/
 output/*.mid
+docs/
