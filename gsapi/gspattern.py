@@ -15,7 +15,7 @@ import math
 
 from . import gsdefs, gsutil
 
-#logger for pattern related operations
+# logger for pattern related operations
 gspatternLog = logging.getLogger("gsapi.gspattern")
 gspatternLog.setLevel(level=logging.WARNING)
 
@@ -249,7 +249,7 @@ class Pattern(object):
         self.name = name
         self.startTime = 0
         self.originPattern = None
-        self.resolution = None
+        self.resolution = 960
 
     def __eq__(self, other):
         if isinstance(other, Pattern):
@@ -852,6 +852,27 @@ class Pattern(object):
                 res.events += [newEv]
         return res
 
+    # def quantize(self, stepSize=0.25, quantizeStartTime=True, quantizeDuration=True):
+    #     """ Quantize events.
+    #
+    #     Args:
+    #         stepSize: the duration that we want to quantize to
+    #         quantizeStartTime: do we quantize startTimes
+    #         quantizeDuration: do we quantize duration?
+    #     """
+    #     beatDivision = 1.0 / stepSize
+    #     if quantizeStartTime and quantizeDuration:
+    #         for e in self.events:
+    #             e.startTime = int(e.startTime * beatDivision) * 1.0 / beatDivision
+    #             e.duration = int(e.duration * beatDivision) * 1.0 / beatDivision
+    #     elif quantizeStartTime:
+    #         for e in self.events:
+    #             e.startTime = int(e.startTime * beatDivision) * 1.0 / beatDivision
+    #     elif quantizeDuration:
+    #         for e in self.events:
+    #             e.duration = int(e.duration * beatDivision) * 1.0 / beatDivision
+
+
     def quantize(self, stepSize=0.25, quantizeStartTime=True, quantizeDuration=True):
         """ Quantize events.
 
@@ -860,17 +881,28 @@ class Pattern(object):
             quantizeStartTime: do we quantize startTimes
             quantizeDuration: do we quantize duration?
         """
-        beatDivision = 1.0 / stepSize
-        if quantizeStartTime and quantizeDuration:
-            for e in self.events:
-                e.startTime = int(e.startTime * beatDivision) * 1.0 / beatDivision
-                e.duration = int(e.duration * beatDivision) * 1.0 / beatDivision
-        elif quantizeStartTime:
-            for e in self.events:
-                e.startTime = int(e.startTime * beatDivision) * 1.0 / beatDivision
-        elif quantizeDuration:
-            for e in self.events:
-                e.duration = int(e.duration * beatDivision) * 1.0 / beatDivision
+        beat_grid = 2 * (1.0 / stepSize)
+        for e in self.events:
+            if quantizeStartTime:
+                starts = (e.startTime * beat_grid) % 2
+                if starts < 1.0:
+                    e.startTime = math.floor(e.startTime * beat_grid) / beat_grid
+                elif starts == 1.0:
+                    e.startTime = ((e.startTime - (stepSize * 0.5)) * beat_grid) / beat_grid
+                else:
+                    e.startTime = math.ceil(e.startTime * beat_grid) / beat_grid
+            if quantizeDuration:
+                if e.duration < (stepSize * 0.5):
+                    e.duration = stepSize
+                else:
+                    durs = (e.duration * beat_grid) % 2
+                    if durs < 1.0:
+                        e.duration = math.floor(e.duration * beat_grid) / beat_grid
+                    elif durs == 1.0:
+                        e.duration = ((e.duration + (stepSize * 0.5)) * beat_grid) / beat_grid
+                    else:
+                        e.duration = math.ceil(e.duration * beat_grid) / beat_grid
+
 
     def removeByTags(self, tags):
         """Remove all event(s) in a pattern with specified tag(s).
@@ -1017,7 +1049,7 @@ class Pattern(object):
         Sets the duration of the pattern to fit a complete bar.
 
         """
-        # TODO: get time signature from pattern and operate from there
+        # TODO: get time signature from pattern and operate from there.
         actual_duration = self.duration
         beats_per_bar = self.timeSignature[0]
         self.duration = math.ceil(actual_duration / beats_per_bar) * beats_per_bar

@@ -139,7 +139,7 @@ class FileReader(object):
                 channel = self.RunningStatus & 0x0F
                 data = [ord(trackdata.next()) for x in range(cls.length)]
                 return cls(tick=tick, channel=channel, data=data)
-        raise(Warning, "Unknown MIDI Event: " + repr(stsmsg))
+        # raise(Warning, "Unknown MIDI Event: " + repr(stsmsg))
 
 
 class FileWriter(object):

@@ -335,7 +335,6 @@ def toMidiFile(myPattern, midiMap=gsdefs.defaultPitchNames, folderPath="./output
     track.append(midiio.SetTempoEvent(bpm=myPattern.bpm))
     if myPattern.key:
         keyTuple = __keyToMidiFormat(myPattern.key)
-        print(keyTuple)
         track.append(midiio.KeySignatureEvent(alternatives=keyTuple[0], minor=keyTuple[1]))
 
     # Append the track to the pattern
